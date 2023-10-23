@@ -1,0 +1,17 @@
+{
+  "application_id": "1150846692963405824",
+  "entitlements": [],
+  "id": "1165466607703834665",
+  "token": "aW50ZXJhY3Rpb246MTE2NTQ2NjYwNzcwMzgzNDY2NToxQ1VSekQ3anFCMTAyU0RrdDJUTGNXNWJPQXl6ZWtsZEdvV2M5YXpZWUo5dXI3RTVMUExWblAzM0JHM09JR1N5QjVEVDlPTWsxTHNhdVJyb2psdkxqNnRiaEZQbkx5cTdHOWptQmphN1A5cmZEQVhVSDBub2NUcjFnWVR6ZDl4ag",
+  "type": 1,
+  "user": {
+    "avatar": "885a4f4855b4857e23d5b010dd4d3646",
+    "avatar_decoration_data": null,
+    "discriminator": "6401",
+    "global_name": "Harx",
+    "id": "695398918694895710",
+    "public_flags": 0,
+    "username": "Harx"
+  },
+  "version": 1
+}
