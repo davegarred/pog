@@ -7,7 +7,7 @@ import (
 )
 
 const insertWager = "INSERT INTO wagers(wager_id,offering,accepting,wager,outcome,status) VALUES (nextval('seq_wager_id'), $1, $2, $3, $4, 0)"
-const selectByUser = "SELECT * FROM wagers WHERE offering= $1 or accepting= $2"
+const selectByUser = "SELECT * FROM wagers WHERE (offering= $1 OR accepting= $2) AND status=0"
 
 type PostgresWagerRepository struct {
 	db *sql.DB

@@ -22,7 +22,7 @@ Naming of migration scripts should follow the format:
 
 `V{migration number}__{descriptive name}.sql`
 
-Example: `V1_Create_wager_table.sql`
+Example: `V1__create_wager_table.sql`
 
 For debugging within the database prefer psql.
 ```shell
