@@ -3,7 +3,7 @@ use crate::request::{
     DiscordRequest, DiscordUser, InteractionComponent, InteractionData, InteractionOption,
 };
 use crate::response::{message_response, open_buy_modal, ping_response, DiscordResponse};
-use crate::wager::Wager;
+use crate::wager::{Wager, WagerStatus};
 use crate::wager_repository::WagerRepository;
 use std::collections::HashMap;
 
@@ -62,11 +62,14 @@ impl<R: WagerRepository> Application<R> {
             (Some(wager), Some(outcome)) => (wager.to_string(), outcome.to_string()),
             (_, _) => return Err("missing components needed to place wager".into()),
         };
+        let time = chrono::Utc::now().to_rfc3339();
         let wager = Wager {
+            time,
             offering,
             accepting,
             wager,
             outcome,
+            status: WagerStatus::Open,
         };
 
         let response_message = wager.to_string();

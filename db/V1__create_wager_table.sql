@@ -1,6 +1,7 @@
 CREATE TABLE wagers
 (
     wager_id  int      NOT NULL,
+    time      text     NOT NULL,
     offering  text     NOT NULL,
     accepting text     NOT NULL,
     wager     text     NOT NULL,

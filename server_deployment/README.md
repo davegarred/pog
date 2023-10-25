@@ -7,12 +7,12 @@ for an EC2 instance.
 
 ## Database
 
-Database migrations are managed with [Flyway](https://flywaydb.org/).
+Database migrations are found in [the `db` directory](../db) and managed with [Flyway](https://flywaydb.org/).
 To update a migration:
 ```shell
 flyway \
   -url="jdbc:postgresql://{HOST}:5432/{DATABASE}?user={USER}" \
-  -locations="filesystem:." \
+  -locations="filesystem:./db" \
   migrate
 ```
 The user's password will be queried before running.
