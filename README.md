@@ -9,6 +9,11 @@ export INTEGRATION-TESTING=true
 
 To build for deployment in an AWS Lambda:
 ```
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags lambda.norpc -o bootstrap main.go
+cargo build --target x86_64-unknown-linux-musl --release
+cp target/x86_64-unknown-linux-musl/release/pog bootstrap
 zip bootstrap.zip bootstrap
 ```
+
+## TODO
+- add `payout` endpoint that allows a bet to be paid/cancelled
+- add status and time to wagers
