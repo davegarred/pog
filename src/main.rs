@@ -13,6 +13,7 @@ use crate::response::DiscordResponse;
 use crate::verify::VerifyTool;
 
 mod application;
+mod discord_id;
 mod error;
 mod postgres_repository;
 mod request;

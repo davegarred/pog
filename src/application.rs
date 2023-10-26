@@ -1,11 +1,16 @@
+use std::collections::HashMap;
+
+use crate::discord_id::{combine_user_payload, DiscordId, split_combined_user_payload};
 use crate::error::Error;
 use crate::request::{
     DiscordRequest, DiscordUser, InteractionComponent, InteractionData, InteractionOption,
 };
-use crate::response::{message_response, open_buy_modal, ping_response, DiscordResponse};
+use crate::response::{
+    DiscordResponse, message_response,
+    open_buy_modal, open_select_wager_for_close_choices, ping_response,
+};
 use crate::wager::{Wager, WagerStatus};
 use crate::wager_repository::WagerRepository;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Application<R: WagerRepository> {
@@ -21,6 +26,7 @@ impl<R: WagerRepository> Application<R> {
         match request.response_type {
             1 => Ok(ping_response()),
             2 => self.command_handler(request).await,
+            3 => self.select_choice_handler(request).await,
             5 => self.modal_response_handler(request).await,
             _ => Err(Error::Invalid(format!(
                 "unknown response type: {}",
@@ -36,9 +42,9 @@ impl<R: WagerRepository> Application<R> {
             Some(data) => data,
         };
         match name.as_str() {
-            "bet" => self.initiate_bet(data),
+            "bet" => self.initiate_bet(request),
             "bets" => self.list_bets(data).await,
-            "payout" => self.pay_bet(request),
+            "payout" => self.pay_bet(request).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
                 name
@@ -46,17 +52,40 @@ impl<R: WagerRepository> Application<R> {
         }
     }
 
+    pub async fn select_choice_handler(
+        &self,
+        request: DiscordRequest,
+    ) -> Result<DiscordResponse, Error> {
+        let data = expect_data(&request)?;
+        if let Some(values) = &data.values {
+            if let Some(wager_id) = values.get(0) {
+                let wager_id = match wager_id.parse::<i32>() {
+                    Ok(wager_id) => wager_id,
+                    Err(_) => {
+                        return Err("unable to parse a wager_id from the returned value".into());
+                    }
+                };
+                self.repo.update_status(wager_id, WagerStatus::Paid).await?;
+                return Ok(message_response("Bet closed as paid"));
+            }
+        }
+        Err("missing response to bet closing reason selection".into())
+    }
+
     pub async fn modal_response_handler(
         &self,
         request: DiscordRequest,
     ) -> Result<DiscordResponse, Error> {
         let user = expect_member_user(&request)?;
-        let offering = format!("<@{}>", user.id);
+        // let offering = format!("<@{}>", user.global_name);
+        let offering = user.global_name.to_string();
+        let resolved_offering_user = DiscordId::from_raw_str(&user.id);
         let data = expect_data(&request)?;
-        let accepting = match &data.custom_id {
-            Some(id) => id.to_string(),
+        let (accepting, resolved_accepting_user) = match &data.custom_id {
+            Some(combined_user_data) => split_combined_user_payload(combined_user_data),
             None => return Err("custom_id needed for modal handler but not found".into()),
         };
+
         let components = collect_components(data)?;
         let (wager, outcome) = match (components.get("wager"), components.get("outcome")) {
             (Some(wager), Some(outcome)) => (wager.to_string(), outcome.to_string()),
@@ -64,41 +93,63 @@ impl<R: WagerRepository> Application<R> {
         };
         let time = chrono::Utc::now().to_rfc3339();
         let wager = Wager {
+            wager_id: 0,
             time,
             offering,
+            resolved_offering_user,
             accepting,
+            resolved_accepting_user,
             wager,
             outcome,
             status: WagerStatus::Open,
         };
 
-        let response_message = wager.to_string();
+        let response_message = wager.to_resolved_string();
         self.repo.insert(wager).await?;
         Ok(message_response(response_message))
     }
 
-    pub fn initiate_bet(&self, data: &InteractionData) -> Result<DiscordResponse, Error> {
+    pub fn initiate_bet(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
+        let data = expect_data(&request)?;
         let option = expect_option_at(data, 0)?;
         let accepting = option.value.to_string();
-        Ok(open_buy_modal(accepting))
+        let accepting_user_payload: String = match DiscordId::attempt_from_str(&accepting) {
+            Some(id) => {
+                let user = expect_resolved_user(&id, &request)?;
+                combine_user_payload(&user.global_name, Some(id))
+            }
+            None => accepting,
+        };
+        Ok(open_buy_modal(accepting_user_payload))
     }
 
     pub async fn list_bets(&self, data: &InteractionData) -> Result<DiscordResponse, Error> {
         let option = expect_option_at(data, 0)?;
-        let user = option.value.to_string();
-        let wagers = self.repo.search_by_user(&user).await?;
+        let username = option.value.to_string();
+        let wagers = match DiscordId::attempt_from_str(&option.value) {
+            Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
+            None => vec![],
+        };
         if wagers.is_empty() {
-            let message = format!("{} has no outstanding wagers", user);
+            let message = format!("{} has no outstanding wagers", username);
             return Ok(message_response(message));
         }
-        let mut message = format!("{} has {} outstanding wagers:", user, wagers.len());
+        let mut message = format!("{} has {} outstanding wagers:", username, wagers.len());
         for wager in wagers {
             message.push_str(format!("\n- {}", wager).as_str());
         }
         Ok(message_response(message))
     }
-    pub fn pay_bet(&self, _request: DiscordRequest) -> Result<DiscordResponse, Error> {
-        Ok(message_response("this is not working yet"))
+    pub async fn pay_bet(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
+        let user = expect_member_user(&request)?;
+        // let user_id = DiscordId::from_raw_str(&user.id);
+        let wagers = match DiscordId::from_raw_str(&user.id) {
+            Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
+            None => vec![],
+        };
+        Ok(open_select_wager_for_close_choices(wagers))
+        // Ok(message_response("this is not working yet"))
+        // Ok(open_select_closing_reason_choices())
     }
 }
 
@@ -142,7 +193,7 @@ fn collect_components_recurse(
                 if let (Some(key), Some(value)) = (&component.custom_id, &component.value) {
                     result.insert(key.to_string(), value.to_string());
                 }
-            },
+            }
         };
     }
     Ok(result)
@@ -155,12 +206,26 @@ fn expect_member_user(data: &DiscordRequest) -> Result<&DiscordUser, Error> {
     }
 }
 
+fn expect_resolved_user<'a>(
+    id: &DiscordId,
+    request: &'a DiscordRequest,
+) -> Result<&'a DiscordUser, Error> {
+    let data = expect_data(request)?;
+    if let Some(resolved) = &data.resolved {
+        if let Some(user) = resolved.users.get(&id.str_value()) {
+            return Ok(user);
+        }
+    }
+    Err("no resolved user found".into())
+}
+
 #[cfg(test)]
 mod test {
+    use std::fs;
+
     use crate::application::Application;
     use crate::request::DiscordRequest;
     use crate::wager_repository::InMemWagerRepository;
-    use std::fs;
 
     #[tokio::test]
     async fn ping_request() {
@@ -170,13 +235,41 @@ mod test {
         assert_eq!(1, result.response_type);
     }
 
-    // TODO: verify additional requests
+    #[tokio::test]
+    async fn initialize_bet_request() {
+        let request = expect_request_from("dto_payloads/initialize_bet_request.json");
+        let app = Application::new(InMemWagerRepository::default());
+        let result = app.request_handler(request).await.unwrap();
+        assert_eq!(9, result.response_type);
+    }
 
     #[tokio::test]
     async fn modal_response() {
         let request = expect_request_from("dto_payloads/bet_modal_request.json");
         let app = Application::new(InMemWagerRepository::default());
         let result = app.request_handler(request).await.unwrap();
+        assert_eq!(4, result.response_type);
+    }
+
+    #[tokio::test]
+    async fn payout_response() {
+        let request = expect_request_from("dto_payloads/payout_request.json");
+        let app = Application::new(InMemWagerRepository::default());
+        let result = app.request_handler(request).await.unwrap();
+        // TODO: fix this
+        let ser = serde_json::to_string(&result).unwrap();
+        println!("{}", ser);
+        assert_eq!(4, result.response_type);
+    }
+
+    #[tokio::test]
+    async fn select_wager_close_reason_response() {
+        let request = expect_request_from("dto_payloads/T31_selected_bet_to_close_request.json");
+        let app = Application::new(InMemWagerRepository::default());
+        let result = app.request_handler(request).await.unwrap();
+        // TODO: fix this
+        let ser = serde_json::to_string(&result).unwrap();
+        println!("{}", ser);
         assert_eq!(4, result.response_type);
     }
 

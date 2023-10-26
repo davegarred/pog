@@ -5,7 +5,7 @@
     "flags": 0,
     "guild_id": "1150922826463846521",
     "id": "1165639175018651688",
-    "last_message_id": "1166921301819133973",
+    "last_message_id": "1166882095403122790",
     "name": "wagers",
     "nsfw": false,
     "parent_id": "1150922826463846522",
@@ -17,29 +17,9 @@
   },
   "channel_id": "1165639175018651688",
   "data": {
-    "components": [
-      {
-        "components": [
-          {
-            "custom_id": "wager",
-            "type": 4,
-            "value": "$20"
-          }
-        ],
-        "type": 1
-      },
-      {
-        "components": [
-          {
-            "custom_id": "outcome",
-            "type": 4,
-            "value": "something something"
-          }
-        ],
-        "type": 1
-      }
-    ],
-    "custom_id": "695398918694895710|Harx"
+    "id": "1166780559276654602",
+    "name": "payout",
+    "type": 1
   },
   "entitlement_sku_ids": [],
   "entitlements": [],
@@ -50,7 +30,7 @@
   },
   "guild_id": "1150922826463846521",
   "guild_locale": "en-US",
-  "id": "1166975084959899688",
+  "id": "1166886874657325136",
   "locale": "en-US",
   "member": {
     "avatar": null,
@@ -75,7 +55,7 @@
       "username": "Harx"
     }
   },
-  "token": "aW50ZXJhY3Rpb246MTE2Njk3NTA4NDk1OTg5OTY4ODpMMlJISVpEU0JHeXJoNkQyUzJXUmIwb2dwMUI4anQ3cWFqcUlseGVMV2JEb2QwR1B2NTZmV3RwU29yZkpLM05BemFCNG8xdEtSTktWa01UaHVXU2RMdkJZRzRJOVg1YTI5b3RCNkxWc0FXdUNGaU9ub3E4VFFLcXJrR0IyMWtpMg",
-  "type": 5,
+  "token": "aW50ZXJhY3Rpb246MTE2Njg4Njg3NDY1NzMyNTEzNjo3bEJYV0lpdGRjeWwxUkV4eW9Fc0REeXMzOVFnSHA0UU80aU5iUnc2UEE4Q1JDc3lzWUI5ZlZ3Ykw4RmJqSHAwMUs4S29ncnQ4THREeW5rUnBOVjlJaUp4dmh3cFdWQ1BDdjdDbzd1M3RXUm5NRzZoalE4S3VOV1RCUE91ejdaOQ",
+  "type": 2,
   "version": 1
 }

@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
+use crate::wager::Wager;
 use crate::ADD_BET_PLACEHOLDER_TEXT;
+use serde::{Deserialize, Serialize};
 
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
@@ -24,6 +25,8 @@ pub struct InteractionComponent {
     pub title: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<InteractionComponent>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub options: Vec<SelectMenuOption>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
@@ -37,6 +40,14 @@ pub struct InteractionComponent {
     pub max_length: Option<u16>,
 }
 
+// https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+pub struct SelectMenuOption {
+    pub label: String,
+    pub value: String,
+    pub description: String,
+}
+
 pub fn ping_response() -> DiscordResponse {
     DiscordResponse {
         response_type: 1,
@@ -44,14 +55,22 @@ pub fn ping_response() -> DiscordResponse {
     }
 }
 
-pub fn message_response<T: ToString>(message: T) -> DiscordResponse {
+pub fn message_response<T: ToString>(content: T) -> DiscordResponse {
+    select_response(content, vec![])
+}
+
+pub fn select_response<T: ToString>(
+    content: T,
+    components: Vec<InteractionComponent>,
+) -> DiscordResponse {
     DiscordResponse {
         response_type: 4,
         data: Some(InteractionComponent {
-            content: Some(message.to_string()),
+            content: Some(content.to_string()),
             custom_id: None,
             title: None,
-            components: vec![],
+            components,
+            options: vec![],
             label: None,
             placeholder: None,
             style: None,
@@ -69,6 +88,7 @@ pub fn open_buy_modal<T: ToString>(accepting: T) -> DiscordResponse {
         custom_id: Some("wager".to_string()),
         title: None,
         components: vec![],
+        options: vec![],
         label: Some("How much are we wagering?".to_string()),
         placeholder: Some("$20".to_string()),
         style: Some(1),
@@ -81,6 +101,7 @@ pub fn open_buy_modal<T: ToString>(accepting: T) -> DiscordResponse {
         custom_id: Some("outcome".to_string()),
         title: None,
         components: vec![],
+        options: vec![],
         label: Some("What is the bet on?".to_string()),
         placeholder: Some(ADD_BET_PLACEHOLDER_TEXT.to_string()),
         style: Some(2),
@@ -95,6 +116,7 @@ pub fn open_buy_modal<T: ToString>(accepting: T) -> DiscordResponse {
             custom_id: Some(accepting.to_string()),
             title: Some("Place a bet".to_string()),
             components: vec![action_row(wager_modal), action_row(outcome_modal)],
+            options: vec![],
             label: None,
             placeholder: None,
             style: None,
@@ -104,6 +126,64 @@ pub fn open_buy_modal<T: ToString>(accepting: T) -> DiscordResponse {
     }
 }
 
+// pub fn open_select_closing_reason_choices() -> DiscordResponse {
+//     let options = vec![
+//         SelectMenuOption {
+//             label: "Paid".to_string(),
+//             value: "paid".to_string(),
+//             description: "This bet was paid out".to_string(),
+//         },
+//         SelectMenuOption {
+//             label: "No Bet".to_string(),
+//             value: "nobet".to_string(),
+//             description: "Push or the bet predicate never happened".to_string(),
+//         },
+//         SelectMenuOption {
+//             label: "Cancel".to_string(),
+//             value: "cancel".to_string(),
+//             description: "This bet doesn't exist".to_string(),
+//         },
+//     ];
+//     let close_reason = select_choice_component("reason", "Why is the bet closing?", options);
+//     select_response("Close out a bet", vec![action_row(close_reason)])
+// }
+
+fn select_choice_component(
+    custom_id: &str,
+    placeholder: &str,
+    options: Vec<SelectMenuOption>,
+) -> InteractionComponent {
+    InteractionComponent {
+        response_type: Some(3),
+        content: None,
+        custom_id: Some(custom_id.to_string()),
+        title: None,
+        components: vec![],
+        options,
+        label: None,
+        placeholder: Some(placeholder.to_string()),
+        style: None,
+        min_length: None,
+        max_length: None,
+    }
+}
+
+pub fn open_select_wager_for_close_choices(wagers: Vec<Wager>) -> DiscordResponse {
+    let mut options: Vec<SelectMenuOption> = Default::default();
+    for wager in wagers {
+        let value = format!("{}", wager.wager_id);
+        // let value = format!("{}", wager.wager_id);
+        let description = wager.to_string();
+        options.push(SelectMenuOption {
+            label: value.clone(),
+            value,
+            description,
+        });
+    }
+    let close_bet = select_choice_component("bet", "Close which bet?", options);
+    select_response("Close out a bet", vec![action_row(close_bet)])
+}
+
 pub fn action_row(modal: InteractionComponent) -> InteractionComponent {
     InteractionComponent {
         response_type: Some(1),
@@ -111,6 +191,7 @@ pub fn action_row(modal: InteractionComponent) -> InteractionComponent {
         custom_id: None,
         title: None,
         components: vec![modal],
+        options: vec![],
         label: None,
         placeholder: None,
         style: None,
@@ -120,7 +201,9 @@ pub fn action_row(modal: InteractionComponent) -> InteractionComponent {
 }
 #[cfg(test)]
 mod test {
-    use crate::response::{message_response, open_buy_modal, ping_response};
+    use crate::response::{
+        message_response, open_buy_modal, ping_response,
+    };
 
     #[test]
     fn test_ping() {

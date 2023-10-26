@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
@@ -30,6 +31,11 @@ pub struct InteractionData {
     pub options: Option<Vec<InteractionOption>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Vec<InteractionComponent>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub values: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved: Option<ResolvedData>,
     // Id              string                 `json:"id"`
     // CustomId        string                 `json:"custom_id"`
     // Name            string                 `json:"name"`
@@ -61,6 +67,12 @@ pub struct InteractionComponent {
     pub components: Option<Vec<InteractionComponent>>,
 }
 
+// https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+pub struct ResolvedData {
+    pub users: HashMap<String, DiscordUser>,
+}
+
 // https://discord.com/developers/docs/resources/guild#guild-member-object
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct DiscordMember {
@@ -72,6 +84,7 @@ pub struct DiscordMember {
 pub struct DiscordUser {
     pub id: String,
     pub username: String,
+    pub global_name: String,
     pub avatar: String,
 }
 
@@ -96,6 +109,18 @@ mod test {
     #[test]
     fn test_bet_modal_request() {
         let contents = fs::read_to_string("dto_payloads/bet_modal_request.json").unwrap();
+        let _request: DiscordRequest = serde_json::from_str(&contents).unwrap();
+    }
+
+    #[test]
+    fn test_payout_request() {
+        let contents = fs::read_to_string("dto_payloads/payout_request.json").unwrap();
+        let _request: DiscordRequest = serde_json::from_str(&contents).unwrap();
+    }
+
+    #[test]
+    fn test_select_option_request() {
+        let contents = fs::read_to_string("dto_payloads/select_option_request.json").unwrap();
         let _request: DiscordRequest = serde_json::from_str(&contents).unwrap();
     }
 }

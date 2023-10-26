@@ -50,3 +50,9 @@ The application is expected to be deployed as a Lambda instance with network sec
 Expected environment variables:
 - DB_CONNECTION_STRING - connection string formatted for use by [SQLx Postgres driver](https://github.com/launchbadge/sqlx)
 - DISCORD_PUBLIC_KEY - the public key used for Ed25519 verification of inbound calls
+
+
+## TODO
+- check to ensure only one name is used
+- search in `/bets` for non-discord users
+- test InMemWagerRepo with the Postgres repo tests
