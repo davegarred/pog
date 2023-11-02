@@ -43,7 +43,7 @@ impl<R: WagerRepository> Application<R> {
         };
         match name.as_str() {
             "bet" => self.initiate_bet(request),
-            "bets" => self.list_bets(data).await,
+            "bets" => self.list_bets(request).await,
             "payout" => self.pay_bet(request).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
@@ -123,26 +123,31 @@ impl<R: WagerRepository> Application<R> {
         Ok(open_buy_modal(accepting_user_payload))
     }
 
-    pub async fn list_bets(&self, data: &InteractionData) -> Result<DiscordResponse, Error> {
+    pub async fn list_bets(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
+        let data = expect_data(&request)?;
         let option = expect_option_at(data, 0)?;
-        let username = option.value.to_string();
+        let user_id = match DiscordId::attempt_from_str(&option.value) {
+            Some(id) => id,
+            None => return Err("user was not correctly resolved".into()),
+        };
+        let username = expect_resolved_user(&user_id, &request)?;
         let wagers = match DiscordId::attempt_from_str(&option.value) {
             Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
             None => vec![],
         };
         if wagers.is_empty() {
-            let message = format!("{} has no outstanding wagers", username);
+            let message = format!("{} has no outstanding wagers", username.username);
             return Ok(message_response(message));
         }
-        let mut message = format!("{} has {} outstanding wagers:", username, wagers.len());
+        let mut message = format!("{} has {} outstanding wagers:", username.username, wagers.len());
         for wager in wagers {
             message.push_str(format!("\n- {}", wager).as_str());
         }
         Ok(message_response(message))
     }
+
     pub async fn pay_bet(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
         let user = expect_member_user(&request)?;
-        // let user_id = DiscordId::from_raw_str(&user.id);
         let wagers = match DiscordId::from_raw_str(&user.id) {
             Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
             None => vec![],
@@ -219,12 +224,19 @@ fn expect_resolved_user<'a>(
     Err("no resolved user found".into())
 }
 
+#[test]
+fn test_expect_resolved_user() {
+    // TODO
+    todo!()
+}
+
 #[cfg(test)]
 mod test {
     use std::fs;
 
     use crate::application::Application;
     use crate::request::DiscordRequest;
+    use crate::response::message_response;
     use crate::wager_repository::InMemWagerRepository;
 
     #[tokio::test]
@@ -249,6 +261,14 @@ mod test {
         let app = Application::new(InMemWagerRepository::default());
         let result = app.request_handler(request).await.unwrap();
         assert_eq!(4, result.response_type);
+    }
+
+    #[tokio::test]
+    async fn list_bets_response() {
+        let request = expect_request_from("dto_payloads/T20_list_bets_request.json");
+        let app = Application::new(InMemWagerRepository::default());
+        let result = app.request_handler(request).await.unwrap();
+        assert_eq!(result, message_response("Harx has no outstanding wagers"))
     }
 
     #[tokio::test]
