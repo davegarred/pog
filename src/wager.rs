@@ -52,7 +52,7 @@ pub enum WagerStatus {
 
 impl WagerStatus {
     pub fn as_i16(&self) -> i16 {
-        self.clone() as i16
+        *self as i16
     }
     pub fn from_i16(val: i16) -> Self {
         match val {

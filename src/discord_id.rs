@@ -15,7 +15,6 @@ impl DiscordId {
     pub fn attempt_from_str(value: &str) -> Option<Self> {
         let value = str::trim(value);
         if value.starts_with("<@") && value.ends_with('>') {
-            println!("{}", value);
             let len = value.len();
             let attempt = &value[2..len - 1];
             return Self::from_raw_str(attempt);

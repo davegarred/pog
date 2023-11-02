@@ -64,7 +64,7 @@ impl WagerRepository for PostgresWagerRepo {
             .fetch_one(&self.pool)
             .await
             .ok()
-            .map(|row|row_to_wager(row))
+            .map(row_to_wager)
     }
 
     async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error> {

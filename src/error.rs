@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     NotAuthorized,
+    ClientFailure(String),
     Invalid(String),
     DatabaseFailure(String),
     UnresolvedDiscordUser,

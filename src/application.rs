@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
+use crate::discord_client::DiscordClient;
 use crate::discord_id::{combine_user_payload, DiscordId, split_combined_user_payload};
 use crate::error::Error;
-use crate::request::{
-    DiscordRequest, DiscordUser, InteractionComponent, InteractionData, InteractionOption,
-};
+use crate::request::{DiscordRequest, DiscordUser, InteractionComponent, InteractionData, InteractionOption, RequestMessage};
 use crate::response::{
     DiscordResponse, message_response,
     open_buy_modal, open_select_wager_for_close_choices, ping_response,
@@ -13,13 +12,16 @@ use crate::wager::{Wager, WagerStatus};
 use crate::wager_repository::WagerRepository;
 
 #[derive(Debug, Clone)]
-pub struct Application<R: WagerRepository> {
+pub struct Application<R: WagerRepository, C: DiscordClient> {
     pub repo: R,
+    pub client: C,
 }
 
-impl<R: WagerRepository> Application<R> {
-    pub fn new(repo: R) -> Self {
-        Self { repo }
+impl<R, C> Application<R, C>
+    where R: WagerRepository, C: DiscordClient
+{
+    pub fn new(repo: R, client: C) -> Self {
+        Self { repo, client }
     }
 
     pub async fn request_handler(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
@@ -70,6 +72,11 @@ impl<R: WagerRepository> Application<R> {
                     Some(wager) => wager,
                     None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
                 };
+
+                let message_id = expect_request_message(&request)?.id.clone();
+                let token = request.token;
+                self.client.set_message(&message_id, &token, "close out").await?;
+
                 let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
                 return Ok(message_response(message));
             }
@@ -82,7 +89,6 @@ impl<R: WagerRepository> Application<R> {
         request: DiscordRequest,
     ) -> Result<DiscordResponse, Error> {
         let user = expect_member_user(&request)?;
-        // let offering = format!("<@{}>", user.global_name);
         let offering = user.global_name.to_string();
         let resolved_offering_user = DiscordId::from_raw_str(&user.id);
         let data = expect_data(&request)?;
@@ -158,8 +164,6 @@ impl<R: WagerRepository> Application<R> {
             None => vec![],
         };
         Ok(open_select_wager_for_close_choices(wagers))
-        // Ok(message_response("this is not working yet"))
-        // Ok(open_select_closing_reason_choices())
     }
 }
 
@@ -216,6 +220,13 @@ fn expect_member_user(data: &DiscordRequest) -> Result<&DiscordUser, Error> {
     }
 }
 
+fn expect_request_message(data: &DiscordRequest) -> Result<&RequestMessage, Error> {
+    match &data.message {
+        Some(message) => Ok(message),
+        None => Err("expected a request message on this request".into()),
+    }
+}
+
 fn expect_resolved_user<'a>(
     id: &DiscordId,
     request: &'a DiscordRequest,
@@ -240,6 +251,7 @@ mod test {
     use std::fs;
 
     use crate::application::Application;
+    use crate::discord_client::TestDiscordClient;
     use crate::request::DiscordRequest;
     use crate::response::{DiscordResponse, message_response};
     use crate::wager::{Wager, WagerStatus};
@@ -248,7 +260,7 @@ mod test {
     #[tokio::test]
     async fn ping_request() {
         let request = expect_request_from("dto_payloads/ping_request.json");
-        let app = Application::new(InMemWagerRepository::default());
+        let app = Application::new(InMemWagerRepository::default(), TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
         assert_eq!(1, result.response_type);
     }
@@ -256,7 +268,7 @@ mod test {
     #[tokio::test]
     async fn initialize_bet_request() {
         let request = expect_request_from("dto_payloads/initialize_bet_request.json");
-        let app = Application::new(InMemWagerRepository::default());
+        let app = Application::new(InMemWagerRepository::default(), TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
         assert_eq!(9, result.response_type);
     }
@@ -264,7 +276,7 @@ mod test {
     #[tokio::test]
     async fn modal_response() {
         let request = expect_request_from("dto_payloads/bet_modal_request.json");
-        let app = Application::new(InMemWagerRepository::default());
+        let app = Application::new(InMemWagerRepository::default(), TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
         assert_eq!(4, result.response_type);
     }
@@ -272,7 +284,7 @@ mod test {
     #[tokio::test]
     async fn list_bets_response() {
         let request = expect_request_from("dto_payloads/T20_list_bets_request.json");
-        let app = Application::new(InMemWagerRepository::default());
+        let app = Application::new(InMemWagerRepository::default(), TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
         assert_eq!(result, message_response("Harx has no outstanding wagers"))
     }
@@ -280,7 +292,7 @@ mod test {
     #[tokio::test]
     async fn payout_response() {
         let request = expect_request_from("dto_payloads/payout_request.json");
-        let app = Application::new(InMemWagerRepository::default());
+        let app = Application::new(InMemWagerRepository::default(), TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
         let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"bet","placeholder":"Close which bet?"}]}]}}"#;
         assert_response(result, expected);
@@ -290,6 +302,7 @@ mod test {
     async fn select_wager_close_reason_response() {
         let request = expect_request_from("dto_payloads/T31_selected_bet_to_close_request.json");
         let repo = InMemWagerRepository::default();
+        let client = TestDiscordClient::default();
         repo.insert(Wager {
             wager_id: 109,
             time: "".to_string(),
@@ -301,10 +314,15 @@ mod test {
             outcome: "Rangers repeat".to_string(),
             status: WagerStatus::Open,
         }).await.unwrap();
-        let app = Application::new(repo);
+        let app = Application::new(repo, client.clone());
         let result = app.request_handler(request).await.unwrap();
         let expected = r#"{"type":4,"data":{"content":"Bet closed as paid: <@695398918694895710> vs Woody, $20 - Rangers repeat"}}"#;
         assert_response(result, expected);
+        assert_eq!(Some("close out".to_string()), get_client_message(&client))
+    }
+
+    pub fn get_client_message(client: &TestDiscordClient) -> Option<String> {
+        client.message.lock().unwrap().clone()
     }
 
     fn expect_request_from(filename: &str) -> DiscordRequest {

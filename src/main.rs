@@ -7,6 +7,7 @@ use lambda_http::http::HeaderMap;
 use lambda_http::{run, Error};
 
 use crate::application::Application;
+use crate::default_discord_client::{DefaultDiscordClient};
 use crate::postgres_repository::PostgresWagerRepo;
 use crate::request::DiscordRequest;
 use crate::response::{DiscordResponse, message_response};
@@ -21,8 +22,10 @@ mod response;
 mod verify;
 mod wager;
 mod wager_repository;
+mod discord_client;
+mod default_discord_client;
 
-pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Giants this Sunday";
+pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Chargers outright";
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -30,8 +33,11 @@ async fn main() -> Result<(), Error> {
         std::env::var("DISCORD_PUBLIC_KEY").expect("finding public key from environment");
     let db_connection = std::env::var("DB_CONNECTION_STRING")
         .expect("finding db connection string from environment");
+    let application_id = std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
+    let application_token = std::env::var("DISCORD_TOKEN").expect("finding token from environment");
     let repo = PostgresWagerRepo::new(&db_connection).await;
-    let application = Application::new(repo);
+    let client = DefaultDiscordClient::new(application_id, application_token);
+    let application = Application::new(repo, client);
     let state = AppState {
         verifier: VerifyTool::new(&public_key),
         application,
@@ -57,23 +63,18 @@ async fn lambda_command_handler(
     println!("POST body: {}", body);
     match route(state, headers, body).await {
         Ok(response) => Ok(response.str_response().into_response()),
-        //     let payload = serde_json::to_string(&response).unwrap();
-        //     println!("success: {}", payload);
-        //     let response = Response::builder()
-        //         .status(StatusCode::OK)
-        //         .header("Content-Type", "application/json")
-        //         .body(payload)
-        //         .unwrap();
-        //     Ok(response.into_response())
-        // }
         Err(err) => match err {
             error::Error::NotAuthorized => Ok((StatusCode::UNAUTHORIZED).into_response()),
             error::Error::Invalid(message) => {
-                println!("unexpected error: {}", message);
+                println!("ERROR unexpected error: {}", message);
                 Ok((StatusCode::BAD_REQUEST).into_response())
             }
             error::Error::DatabaseFailure(message) => {
-                println!("DATABASE FAILURE: {}", message);
+                println!("ERROR db connection failure: {}", message);
+                Ok((StatusCode::INTERNAL_SERVER_ERROR).into_response())
+            }
+            error::Error::ClientFailure(message) => {
+                println!("ERROR Client failure: {}", message);
                 Ok((StatusCode::INTERNAL_SERVER_ERROR).into_response())
             }
             error::Error::UnresolvedDiscordUser => Ok(message_response("not a user in this channel").str_response().into_response()),
@@ -98,5 +99,5 @@ async fn route(
 #[derive(Debug, Clone)]
 struct AppState {
     pub verifier: VerifyTool,
-    pub application: Application<PostgresWagerRepo>,
+    pub application: Application<PostgresWagerRepo, DefaultDiscordClient>,
 }

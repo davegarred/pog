@@ -14,7 +14,6 @@ pub struct DiscordResponse {
 impl DiscordResponse {
     pub fn str_response(&self) -> axum::http::Response<String> {
         let payload = serde_json::to_string(self).unwrap();
-        println!("success: {}", payload);
         axum::response::Response::builder()
             .status(axum::http::StatusCode::OK)
             .header("Content-Type", "application/json")
@@ -234,10 +233,9 @@ mod test {
     #[test]
     fn test_open_buy_modal() {
         let response = serde_json::to_string(&open_buy_modal("Woody")).unwrap();
-        println!("{}", response);
         assert_eq!(
             &response,
-            r#"{"type":9,"data":{"custom_id":"Woody","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"Jets beat the Giants this Sunday","style":2,"min_length":3,"max_length":100}]}]}}"#
+            r#"{"type":9,"data":{"custom_id":"Woody","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"Jets beat the Chargers outright","style":2,"min_length":3,"max_length":100}]}]}}"#
         )
     }
 }

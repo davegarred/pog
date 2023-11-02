@@ -15,6 +15,9 @@ pub struct DiscordRequest {
     pub user: Option<DiscordUser>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Vec<InteractionComponent>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<RequestMessage>,
+    pub token: String,
 }
 
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data
@@ -86,6 +89,12 @@ pub struct DiscordUser {
     pub username: String,
     pub global_name: String,
     pub avatar: String,
+}
+
+// https://discord.com/developers/docs/resources/channel#message-object
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+pub struct RequestMessage {
+    pub id: String
 }
 
 #[cfg(test)]
