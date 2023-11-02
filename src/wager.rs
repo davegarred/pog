@@ -42,7 +42,7 @@ impl Wager {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum WagerStatus {
     Open = 0,
     Paid = 1,

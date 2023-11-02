@@ -66,7 +66,12 @@ impl<R: WagerRepository> Application<R> {
                     }
                 };
                 self.repo.update_status(wager_id, WagerStatus::Paid).await?;
-                return Ok(message_response("Bet closed as paid"));
+                let wager = match self.repo.get(wager_id).await {
+                    Some(wager) => wager,
+                    None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
+                };
+                let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
+                return Ok(message_response(message));
             }
         }
         Err("missing response to bet closing reason selection".into())
@@ -128,7 +133,7 @@ impl<R: WagerRepository> Application<R> {
         let option = expect_option_at(data, 0)?;
         let user_id = match DiscordId::attempt_from_str(&option.value) {
             Some(id) => id,
-            None => return Err("user was not correctly resolved".into()),
+            None => return Err(Error::UnresolvedDiscordUser),
         };
         let username = expect_resolved_user(&user_id, &request)?;
         let wagers = match DiscordId::attempt_from_str(&option.value) {
@@ -221,7 +226,7 @@ fn expect_resolved_user<'a>(
             return Ok(user);
         }
     }
-    Err("no resolved user found".into())
+    Err(Error::UnresolvedDiscordUser)
 }
 
 #[test]
@@ -236,8 +241,9 @@ mod test {
 
     use crate::application::Application;
     use crate::request::DiscordRequest;
-    use crate::response::message_response;
-    use crate::wager_repository::InMemWagerRepository;
+    use crate::response::{DiscordResponse, message_response};
+    use crate::wager::{Wager, WagerStatus};
+    use crate::wager_repository::{InMemWagerRepository, WagerRepository};
 
     #[tokio::test]
     async fn ping_request() {
@@ -276,26 +282,39 @@ mod test {
         let request = expect_request_from("dto_payloads/payout_request.json");
         let app = Application::new(InMemWagerRepository::default());
         let result = app.request_handler(request).await.unwrap();
-        // TODO: fix this
-        let ser = serde_json::to_string(&result).unwrap();
-        println!("{}", ser);
-        assert_eq!(4, result.response_type);
+        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"bet","placeholder":"Close which bet?"}]}]}}"#;
+        assert_response(result, expected);
     }
 
     #[tokio::test]
     async fn select_wager_close_reason_response() {
         let request = expect_request_from("dto_payloads/T31_selected_bet_to_close_request.json");
-        let app = Application::new(InMemWagerRepository::default());
+        let repo = InMemWagerRepository::default();
+        repo.insert(Wager {
+            wager_id: 109,
+            time: "".to_string(),
+            offering: "----".to_string(),
+            resolved_offering_user: Some(695398918694895710.into()),
+            accepting: "Woody".to_string(),
+            resolved_accepting_user: None,
+            wager: "$20".to_string(),
+            outcome: "Rangers repeat".to_string(),
+            status: WagerStatus::Open,
+        }).await.unwrap();
+        let app = Application::new(repo);
         let result = app.request_handler(request).await.unwrap();
-        // TODO: fix this
-        let ser = serde_json::to_string(&result).unwrap();
-        println!("{}", ser);
-        assert_eq!(4, result.response_type);
+        let expected = r#"{"type":4,"data":{"content":"Bet closed as paid: <@695398918694895710> vs Woody, $20 - Rangers repeat"}}"#;
+        assert_response(result, expected);
     }
 
     fn expect_request_from(filename: &str) -> DiscordRequest {
         let contents = fs::read_to_string(filename).unwrap();
         let request: DiscordRequest = serde_json::from_str(&contents).unwrap();
         request
+    }
+
+    fn assert_response(response: DiscordResponse, expected: &str) {
+        let ser = serde_json::to_string(&response).unwrap();
+        assert_eq!(ser.as_str(), expected);
     }
 }

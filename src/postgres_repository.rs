@@ -3,11 +3,12 @@ use crate::error::Error;
 use crate::wager::{Wager, WagerStatus};
 use crate::wager_repository::WagerRepository;
 use futures::TryStreamExt;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgPoolOptions, PgRow};
 use sqlx::{Pool, Postgres, Row, Transaction};
 
 const INSERT_WAGER: &str = r#"INSERT INTO wagers(wager_id,time,offering,resolved_offering_user,accepting,resolved_accepting_user,wager,outcome,status)
         VALUES (nextval('seq_wager_id'), $1, $2, $3, $4, $5, $6, $7, $8)"#;
+const SELECT_BY_ID: &str = "SELECT * FROM wagers WHERE wager_id= $1";
 const SELECT_BY_USER: &str =
     "SELECT * FROM wagers WHERE (offering= $1 OR accepting= $2) AND status=0";
 const SELECT_BY_USER_ID: &str =
@@ -57,6 +58,15 @@ impl WagerRepository for PostgresWagerRepo {
         }
     }
 
+    async fn get(&self, wager_id: i32) -> Option<Wager> {
+        sqlx::query(SELECT_BY_ID)
+            .bind(wager_id)
+            .fetch_one(&self.pool)
+            .await
+            .ok()
+            .map(|row|row_to_wager(row))
+    }
+
     async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error> {
         let mut rows = sqlx::query(SELECT_BY_USER_ID)
             .bind(user_id.value())
@@ -64,29 +74,7 @@ impl WagerRepository for PostgresWagerRepo {
             .fetch(&self.pool);
         let mut result: Vec<Wager> = Default::default();
         while let Some(row) = rows.try_next().await.map_err(Error::from)? {
-            let time: String = row.get("time");
-            let wager_id: i32 = row.get("wager_id");
-            let offering: String = row.get("offering");
-            let resolved_offering_user_id: Option<i64> = row.get("resolved_offering_user");
-            let resolved_offering_user = resolved_offering_user_id.map(Into::into);
-            let accepting: String = row.get("accepting");
-            let resolved_accepting_user_id: Option<i64> = row.get("resolved_accepting_user");
-            let resolved_accepting_user = resolved_accepting_user_id.map(Into::into);
-            let wager: String = row.get("wager");
-            let outcome: String = row.get("outcome");
-            let status: i16 = row.get("status");
-            let wager = Wager {
-                wager_id: wager_id as u32,
-                time,
-                offering,
-                resolved_offering_user,
-                accepting,
-                resolved_accepting_user,
-                wager,
-                outcome,
-                status: WagerStatus::from_i16(status),
-            };
-            result.push(wager);
+            result.push(row_to_wager(row));
         }
         Ok(result)
     }
@@ -98,29 +86,7 @@ impl WagerRepository for PostgresWagerRepo {
             .fetch(&self.pool);
         let mut result: Vec<Wager> = Default::default();
         while let Some(row) = rows.try_next().await.map_err(Error::from)? {
-            let time: String = row.get("time");
-            let wager_id: i32 = row.get("wager_id");
-            let offering: String = row.get("offering");
-            let resolved_offering_user_id: Option<i64> = row.get("resolved_offering_user");
-            let resolved_offering_user = resolved_offering_user_id.map(Into::into);
-            let accepting: String = row.get("accepting");
-            let resolved_accepting_user_id: Option<i64> = row.get("resolved_accepting_user");
-            let resolved_accepting_user = resolved_accepting_user_id.map(Into::into);
-            let wager: String = row.get("wager");
-            let outcome: String = row.get("outcome");
-            let status: i16 = row.get("status");
-            let wager = Wager {
-                wager_id: wager_id as u32,
-                time,
-                offering,
-                resolved_offering_user,
-                accepting,
-                resolved_accepting_user,
-                wager,
-                outcome,
-                status: WagerStatus::from_i16(status),
-            };
-            result.push(wager);
+            result.push(row_to_wager(row));
         }
         Ok(result)
     }
@@ -133,6 +99,31 @@ impl WagerRepository for PostgresWagerRepo {
             .await
             .map_err(Error::from)?;
         Ok(())
+    }
+}
+
+fn row_to_wager(row: PgRow) -> Wager {
+    let time: String = row.get("time");
+    let wager_id: i32 = row.get("wager_id");
+    let offering: String = row.get("offering");
+    let resolved_offering_user_id: Option<i64> = row.get("resolved_offering_user");
+    let resolved_offering_user = resolved_offering_user_id.map(Into::into);
+    let accepting: String = row.get("accepting");
+    let resolved_accepting_user_id: Option<i64> = row.get("resolved_accepting_user");
+    let resolved_accepting_user = resolved_accepting_user_id.map(Into::into);
+    let wager: String = row.get("wager");
+    let outcome: String = row.get("outcome");
+    let status: i16 = row.get("status");
+    Wager {
+        wager_id: wager_id as u32,
+        time,
+        offering,
+        resolved_offering_user,
+        accepting,
+        resolved_accepting_user,
+        wager,
+        outcome,
+        status: WagerStatus::from_i16(status),
     }
 }
 

@@ -5,7 +5,7 @@
     "flags": 0,
     "guild_id": "1150922826463846521",
     "id": "1165639175018651688",
-    "last_message_id": "1167064625163014184",
+    "last_message_id": "1169652058337587410",
     "name": "wagers",
     "nsfw": false,
     "parent_id": "1150922826463846522",
@@ -20,7 +20,7 @@
     "component_type": 3,
     "custom_id": "bet",
     "values": [
-      "That ill-shaven guy in Bleachers vs Harx, $20 - Phillies over Rangers, should the meet"
+      "109"
     ]
   },
   "entitlement_sku_ids": [],
@@ -32,7 +32,7 @@
   },
   "guild_id": "1150922826463846521",
   "guild_locale": "en-US",
-  "id": "1167064654921601044",
+  "id": "1169652087609630850",
   "locale": "en-US",
   "member": {
     "avatar": null,
@@ -81,14 +81,14 @@
             "min_values": 1,
             "options": [
               {
-                "description": "Phillies over Rangers, should the meet",
-                "label": "That ill-shaven guy in Bleachers vs Harx, $20 - Phillies over Rangers, should the meet",
-                "value": "That ill-shaven guy in Bleachers vs Harx, $20 - Phillies over Rangers, should the meet"
+                "description": "Harx vs Woody, $20 +300 - Raiders overs Lions",
+                "label": "109",
+                "value": "109"
               },
               {
-                "description": "The latest something",
-                "label": "Harx vs Harx, $20 - The latest something",
-                "value": "Harx vs Harx, $20 - The latest something"
+                "description": "Harx vs Woody, $20 - Rangers repeat in 2024",
+                "label": "110",
+                "value": "110"
               }
             ],
             "placeholder": "Close which bet?",
@@ -102,9 +102,9 @@
     "edited_timestamp": null,
     "embeds": [],
     "flags": 0,
-    "id": "1167064625163014184",
+    "id": "1169652058337587410",
     "interaction": {
-      "id": "1167064624387063838",
+      "id": "1169652055862951966",
       "name": "payout",
       "type": 2,
       "user": {
@@ -121,12 +121,12 @@
     "mention_roles": [],
     "mentions": [],
     "pinned": false,
-    "timestamp": "2023-10-26T11:38:09.651000+00:00",
+    "timestamp": "2023-11-02T14:59:41.792000+00:00",
     "tts": false,
     "type": 20,
     "webhook_id": "1150846692963405824"
   },
-  "token": "aW50ZXJhY3Rpb246MTE2NzA2NDY1NDkyMTYwMTA0NDo5OUpWcjRFa0wydkdjR0w4Z1podlNyTHV4U1VudVJRd3BHeTNHRFpsOTIzR3BLSkV4MHNNQkRSZVBYYjFVQkJ4cWNDRW5xVVAyOHRCbHhuUFVsN01mS0ZzTHJjTDFaNTJYcnlXVGNwU2ZoM2hYVDZacGMzNUZ3SnRPYThNR0tRQg",
+  "token": "aW50ZXJhY3Rpb246MTE2OTY1MjA4NzYwOTYzMDg1MDpZWGgzeW85dHhoSldhWEJRRXZ0UHhPOHZVamxMRHFBeTFZQ2F4b2FteUdhZW5ISWJlVFliWEkydVRSaFdkY0lHcnNOU2ZSUDV2eWtNRkVSZVVOSmtQUERQcGx2MHcyZW9YcU5xNGt0RzR6RzNJbW5keUFOYWZxdk1STjBiWE5vUw",
   "type": 3,
   "version": 1
 }

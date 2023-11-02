@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 #[async_trait::async_trait]
 pub trait WagerRepository {
     async fn insert(&self, wager: Wager) -> Result<(), Error>;
+    async fn get(&self, wager_id: i32) -> Option<Wager>;
     async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error>;
     async fn search_by_user(&self, user: &str) -> Result<Vec<Wager>, Error>;
     async fn update_status(&self, wager_id: i32, status: WagerStatus) -> Result<(), Error>;
@@ -22,6 +23,16 @@ impl WagerRepository for InMemWagerRepository {
         self.wagers.lock().unwrap().push(wager);
         Ok(())
     }
+
+    async fn get(&self, wager_id: i32) -> Option<Wager> {
+        for wager in self.wagers.lock().unwrap().iter() {
+            if wager.wager_id == wager_id as u32 {
+                return Some(wager.clone());
+            }
+        }
+        None
+    }
+
 
     async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error> {
         let mut result = Vec::new();
@@ -50,8 +61,13 @@ impl WagerRepository for InMemWagerRepository {
         Ok(result)
     }
 
-    async fn update_status(&self, _wager_id: i32, _status: WagerStatus) -> Result<(), Error> {
-        todo!()
+    async fn update_status(&self, wager_id: i32, status: WagerStatus) -> Result<(), Error> {
+        for wager in self.wagers.lock().unwrap().iter_mut() {
+            if wager.wager_id == wager_id as u32 {
+                wager.status = status;
+            }
+        }
+        Ok(())
     }
 }
 

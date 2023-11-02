@@ -11,6 +11,18 @@ pub struct DiscordResponse {
     pub data: Option<InteractionComponent>,
 }
 
+impl DiscordResponse {
+    pub fn str_response(&self) -> axum::http::Response<String> {
+        let payload = serde_json::to_string(self).unwrap();
+        println!("success: {}", payload);
+        axum::response::Response::builder()
+            .status(axum::http::StatusCode::OK)
+            .header("Content-Type", "application/json")
+            .body(payload)
+            .unwrap()
+    }
+}
+
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-data-structure
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct InteractionComponent {

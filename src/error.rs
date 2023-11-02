@@ -5,6 +5,7 @@ pub enum Error {
     NotAuthorized,
     Invalid(String),
     DatabaseFailure(String),
+    UnresolvedDiscordUser,
 }
 
 impl From<&str> for crate::error::Error {
