@@ -7,7 +7,7 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_DB: pog
+      POSTGRES_DB: pog_server
       POSTGRES_USER: pog_user
       POSTGRES_PASSWORD: pog_pass
     volumes:

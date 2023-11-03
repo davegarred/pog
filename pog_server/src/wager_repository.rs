@@ -33,15 +33,30 @@ impl WagerRepository for InMemWagerRepository {
         None
     }
 
-
     async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error> {
         let mut result = Vec::new();
         for wager in self.wagers.lock().unwrap().iter() {
-            if let (Some(user_a),Some(user_b)) = (&wager.resolved_offering_user,&wager.resolved_accepting_user) {
-                if user_a == user_id || user_b == user_id && wager.status == WagerStatus::Open {
-                    result.push(wager.clone());
+            match (
+                &wager.resolved_offering_user,
+                &wager.resolved_accepting_user,
+            ) {
+                (Some(user_a), Some(user_b)) => {
+                    if user_a == user_id || user_b == user_id && wager.status == WagerStatus::Open {
+                        result.push(wager.clone());
+                    }
                 }
-            }
+                (Some(user_a), None) => {
+                    if user_a == user_id && wager.status == WagerStatus::Open {
+                        result.push(wager.clone());
+                    }
+                }
+                (None, Some(user_b)) => {
+                    if user_b == user_id && wager.status == WagerStatus::Open {
+                        result.push(wager.clone());
+                    }
+                }
+                (_, _) => {}
+            };
         }
         Ok(result)
     }

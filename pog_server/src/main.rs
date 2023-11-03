@@ -7,13 +7,15 @@ use lambda_http::http::HeaderMap;
 use lambda_http::{run, Error};
 
 use crate::application::Application;
-use crate::default_discord_client::{DefaultDiscordClient};
+use crate::default_discord_client::DefaultDiscordClient;
 use crate::postgres_repository::PostgresWagerRepo;
 use crate::request::DiscordRequest;
-use crate::response::{DiscordResponse, message_response};
+use crate::response::{message_response, DiscordResponse};
 use crate::verify::VerifyTool;
 
 mod application;
+mod default_discord_client;
+mod discord_client;
 mod discord_id;
 mod error;
 mod postgres_repository;
@@ -22,8 +24,6 @@ mod response;
 mod verify;
 mod wager;
 mod wager_repository;
-mod discord_client;
-mod default_discord_client;
 
 pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Chargers outright";
 
@@ -33,10 +33,12 @@ async fn main() -> Result<(), Error> {
         std::env::var("DISCORD_PUBLIC_KEY").expect("finding public key from environment");
     let db_connection = std::env::var("DB_CONNECTION_STRING")
         .expect("finding db connection string from environment");
-    let application_id = std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
+    let application_id =
+        std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
     let application_token = std::env::var("DISCORD_TOKEN").expect("finding token from environment");
+    let sns_topic = std::env::var("SNS_TOPIC").expect("finding sns topic");
     let repo = PostgresWagerRepo::new(&db_connection).await;
-    let client = DefaultDiscordClient::new(application_id, application_token);
+    let client = DefaultDiscordClient::new(application_id, application_token, sns_topic).await;
     let application = Application::new(repo, client);
     let state = AppState {
         verifier: VerifyTool::new(&public_key),
@@ -77,11 +79,14 @@ async fn lambda_command_handler(
                 println!("ERROR Client failure: {}", message);
                 Ok((StatusCode::INTERNAL_SERVER_ERROR).into_response())
             }
-            error::Error::UnresolvedDiscordUser => Ok(message_response("not a user in this channel").str_response().into_response()),
+            error::Error::UnresolvedDiscordUser => {
+                Ok(message_response("not a user in this channel")
+                    .str_response()
+                    .into_response())
+            }
         },
     }
 }
-
 
 async fn route(
     state: AppState,

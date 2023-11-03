@@ -14,11 +14,18 @@ pub struct DiscordResponse {
 impl DiscordResponse {
     pub fn str_response(&self) -> axum::http::Response<String> {
         let payload = serde_json::to_string(self).unwrap();
-        axum::response::Response::builder()
+        println!("response: {}", payload);
+        match axum::response::Response::builder()
             .status(axum::http::StatusCode::OK)
             .header("Content-Type", "application/json")
             .body(payload)
-            .unwrap()
+        {
+            Ok(result) => result,
+            Err(err) => {
+                println!("error building response from discord response");
+                panic!("{}", err)
+            }
+        }
     }
 }
 
@@ -212,9 +219,7 @@ pub fn action_row(modal: InteractionComponent) -> InteractionComponent {
 }
 #[cfg(test)]
 mod test {
-    use crate::response::{
-        message_response, open_buy_modal, ping_response,
-    };
+    use crate::response::{message_response, open_buy_modal, ping_response};
 
     #[test]
     fn test_ping() {

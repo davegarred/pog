@@ -50,6 +50,8 @@ The application is expected to be deployed as a Lambda instance with network sec
 Expected environment variables:
 - DB_CONNECTION_STRING - connection string formatted for use by [SQLx Postgres driver](https://github.com/launchbadge/sqlx)
 - DISCORD_PUBLIC_KEY - the public key used for Ed25519 verification of inbound calls
+- DISCORD_TOKEN - Discord access token for the application
+- DISCORD_APPLICATION_ID - Discord application id
 
 
 ## TODO

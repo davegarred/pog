@@ -129,7 +129,8 @@ fn row_to_wager(row: PgRow) -> Wager {
 
 #[tokio::test]
 async fn test_repo() {
-    let repo = PostgresWagerRepo::new("postgresql://pog_user:pog_pass@127.0.0.1:5432/pog").await;
+    let repo =
+        PostgresWagerRepo::new("postgresql://pog_user:pog_pass@127.0.0.1:5432/pog_server").await;
     let user_a = uuid::Uuid::new_v4().to_string();
     let user_b = uuid::Uuid::new_v4().to_string();
     let user_c = uuid::Uuid::new_v4().to_string();

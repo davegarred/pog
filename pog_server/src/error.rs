@@ -9,7 +9,7 @@ pub enum Error {
     UnresolvedDiscordUser,
 }
 
-impl From<&str> for crate::error::Error {
+impl From<&str> for Error {
     fn from(value: &str) -> Self {
         Self::Invalid(value.to_string())
     }
