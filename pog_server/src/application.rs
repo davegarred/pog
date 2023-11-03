@@ -72,7 +72,6 @@ where
                         return Err("unable to parse a wager_id from the returned value".into());
                     }
                 };
-                self.repo.update_status(wager_id, WagerStatus::Paid).await?;
 
                 let message_id = expect_request_message(&request)?.id.clone();
                 let token = request.token;
@@ -82,6 +81,7 @@ where
                     println!("ERROR sending SNS: {}", msg);
                 }
 
+                self.repo.update_status(wager_id, WagerStatus::Paid).await?;
                 let wager = match self.repo.get(wager_id).await {
                     Some(wager) => wager,
                     None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),

@@ -5,6 +5,7 @@ pub enum DiscordMessage {
     Update(UpdateMessage),
     Delete(DeleteMessage),
 }
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeleteMessage {
     pub authorization: Authorization,
@@ -57,16 +58,26 @@ impl Authorization {
 
 #[cfg(test)]
 mod test {
-    use crate::{Authorization, DeleteMessage};
+    use crate::{Authorization, DeleteMessage, UpdateMessage};
     use std::fs;
 
     #[test]
-    fn serialization() {
+    fn serialization_delete() {
         let msg = sample_delete_message();
         let ser = serde_json::to_string(&msg).unwrap();
         let expected = fs::read_to_string("dto_payloads/delete_message.json").unwrap();
         assert_eq!(ser, expected);
         let des: DeleteMessage = serde_json::from_str(&ser).unwrap();
+        assert_eq!(des, msg);
+    }
+
+    #[test]
+    fn serialization_update() {
+        let msg = sample_update_message();
+        let ser = serde_json::to_string(&msg).unwrap();
+        let expected = fs::read_to_string("dto_payloads/update_message.json").unwrap();
+        assert_eq!(ser, expected);
+        let des: UpdateMessage = serde_json::from_str(&ser).unwrap();
         assert_eq!(des, msg);
     }
 
@@ -81,8 +92,15 @@ mod test {
     }
 
     #[test]
-    fn url() {
+    fn url_delete() {
         let msg = sample_delete_message();
+        let url = msg.url();
+        assert_eq!("https://discord.com/api/v10/webhooks/1111111111111111111/aW50ZXJhY3Rpb246MTE3MDAwNTUzNzUyMjQ2Njk0ODpsNWEwYjJPdlh4blQ0VFFZZmpoVzc5Y1h1aEIxdGFaeWxORVJmMDBwZjFJNUZucUpsNlNwV1hDallpNVlKNXV6TnpjeTg1NW1wQlI2dmFQT0lad2dCdzRLMWpYVW90VUo2V3VQcDZtRHdvbmNVTG9hQ0l6aE5hc0NOaFlwcjdPNw/messages/1170005526755688611", url);
+    }
+
+    #[test]
+    fn url_update() {
+        let msg = sample_update_message();
         let url = msg.url();
         assert_eq!("https://discord.com/api/v10/webhooks/1111111111111111111/aW50ZXJhY3Rpb246MTE3MDAwNTUzNzUyMjQ2Njk0ODpsNWEwYjJPdlh4blQ0VFFZZmpoVzc5Y1h1aEIxdGFaeWxORVJmMDBwZjFJNUZucUpsNlNwV1hDallpNVlKNXV6TnpjeTg1NW1wQlI2dmFQT0lad2dCdzRLMWpYVW90VUo2V3VQcDZtRHdvbmNVTG9hQ0l6aE5hc0NOaFlwcjdPNw/messages/1170005526755688611", url);
     }
@@ -95,6 +113,17 @@ mod test {
             },
             message_id: "1170005526755688611".to_string(),
             request_token: "aW50ZXJhY3Rpb246MTE3MDAwNTUzNzUyMjQ2Njk0ODpsNWEwYjJPdlh4blQ0VFFZZmpoVzc5Y1h1aEIxdGFaeWxORVJmMDBwZjFJNUZucUpsNlNwV1hDallpNVlKNXV6TnpjeTg1NW1wQlI2dmFQT0lad2dCdzRLMWpYVW90VUo2V3VQcDZtRHdvbmNVTG9hQ0l6aE5hc0NOaFlwcjdPNw".to_string(),
+        }
+    }
+    fn sample_update_message() -> UpdateMessage {
+        UpdateMessage {
+            authorization: Authorization {
+                application_id: "1111111111111111111".to_string(),
+                application_token: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX".to_string(),
+            },
+            message_id: "1170005526755688611".to_string(),
+            request_token: "aW50ZXJhY3Rpb246MTE3MDAwNTUzNzUyMjQ2Njk0ODpsNWEwYjJPdlh4blQ0VFFZZmpoVzc5Y1h1aEIxdGFaeWxORVJmMDBwZjFJNUZucUpsNlNwV1hDallpNVlKNXV6TnpjeTg1NW1wQlI2dmFQT0lad2dCdzRLMWpYVW90VUo2V3VQcDZtRHdvbmNVTG9hQ0l6aE5hc0NOaFlwcjdPNw".to_string(),
+            message: "some message".to_string(),
         }
     }
 }

@@ -14,7 +14,7 @@ pub async fn delete_message(message: DeleteMessage) -> Result<(), Error> {
         Ok(_) => Ok(()),
         Err(err) => {
             println!("ERROR calling Discord: {}", err);
-            Err("".into())
+            Err("unable to delete message".into())
         }
     }
 }
@@ -31,7 +31,7 @@ pub async fn update_message(message: UpdateMessage) -> Result<(), Error> {
         Ok(_) => Ok(()),
         Err(err) => {
             println!("ERROR calling Discord: {}", err);
-            Err("".into())
+            Err("unable to update message".into())
         }
     }
 }
