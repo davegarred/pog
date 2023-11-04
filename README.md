@@ -5,8 +5,12 @@ For integration tests recommend using docker to stand up a Postgres instance.
 ```shell
 docker-compose up -d
 ```
+If not already added, you will need the musl target to build for AWS Lambda.
+```
+rustup target add x86_64-unknown-linux-musl
+```
 
-To build for deployment in an AWS Lambda:
+Then build and package the binary.
 ```
 cargo build --target x86_64-unknown-linux-musl --release
 cp target/x86_64-unknown-linux-musl/release/pog bootstrap
@@ -16,10 +20,8 @@ zip bootstrap.zip bootstrap
 ## Application deployment
 
 ### Bastion host
-A [startup script](server_deployment/bastion_install.sh) is provided for use in configuring an Ubuntu bastion host. 
-Passing this as the
-[User Data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html?icmpid=docs_ec2_console)
-for an EC2 instance will install the needed clients on startup.
+A [Cloudformation template](infrastructure/infrastructure.yaml) is provided for use in configuring a database, bastion
+host and the necessary infrastructure.
 
 ### Database
 

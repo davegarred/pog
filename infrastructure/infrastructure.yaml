@@ -1,0 +1,331 @@
+Description: Deploys the DB, bastion host and network infrastructure for the pog project.
+
+Parameters:
+  Dbname:
+    Description: The name of the primary database
+    Type: String
+    Default: pog
+
+  Ec2KeyName:
+    Description: The keypair to use for EC2 host access
+    Type: String
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.192.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref "AWS::StackName", "vpc" ] ]
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref "AWS::StackName", "igw" ] ]
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.192.10.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Subnet (AZ1)
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: 10.192.11.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Subnet (AZ2)
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      CidrBlock: 10.192.20.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Private Subnet (AZ1)
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: 10.192.21.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Private Subnet (AZ2)
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId: !Ref PublicSubnet2
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Public Routes
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Private Routes (AZ1)
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName} Private Routes (AZ2)
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for primary database
+      DBSubnetGroupName: !Join [ '-', [ !Ref "AWS::StackName", "rds-subnet-group" ] ]
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref "AWS::StackName", "rds-subnet-group" ] ]
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  SshOnlySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "ssh-only-sg"
+      GroupDescription: "Security group allowing ssh only"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  LocalSshOnlySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "local-ssh-only-sg"
+      GroupDescription: "Security group allowing ssh from local VPC only"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.192.0.0/16
+
+  LocalPostgresOnlySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "local-postgres-only-sg"
+      GroupDescription: "Security group allowing postgres from local VPC only"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 10.192.0.0/16
+
+  BastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0efcece6bed30fd98
+      KeyName: !Ref Ec2KeyName
+      InstanceType: t3.nano
+      SecurityGroupIds: [ !Ref SshOnlySecurityGroup ]
+      SubnetId: !Ref PublicSubnet1
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update
+          apt upgrade -y
+          apt install postgresql-client-14 -y
+          sudo snap install flyway
+          git clone https://github.com/davegarred/pog.git
+          reboot now
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref "AWS::StackName", "bastion-host" ] ]
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  DatabaseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: 'admin database secret'
+      Name: !Join [ '-', [ !Ref "AWS::StackName", "db-secret" ] ]
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "postgres"}'
+        GenerateStringKey: 'password'
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\{}#'
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref "AWS::StackName", 'db-secret' ] ]
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+  Database:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBInstanceIdentifier: !Join [ '-', [ !Ref "AWS::StackName", 'db' ] ]
+      DBName: !Ref Dbname
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      Engine: postgres
+      EngineVersion: 15.3
+      MasterUsername: !Join [ '', [ '{{resolve:secretsmanager:', !Ref DatabaseSecret, ':SecretString:username}}' ] ]
+      MasterUserPassword: !Join [ '', [ '{{resolve:secretsmanager:', !Ref DatabaseSecret, ':SecretString:password}}' ] ]
+      DeletionProtection: true
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      BackupRetentionPeriod: 35
+      VPCSecurityGroups: [ !Ref LocalPostgresOnlySecurityGroup ]
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref "AWS::StackName", "db" ] ]
+        - Key: project
+          Value: !Ref "AWS::StackName"
+
+Outputs:
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
+
+  PrivateSubnet1:
+    Description: A reference to the created VPC
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2:
+    Description: A reference to the created VPC
+    Value: !Ref PrivateSubnet2
+
+  DatabaseEndpoint:
+    Description: The database endpoint
+    Value: !GetAtt "Database.Endpoint.Address"
+
+  DatabaseName:
+    Description: The database endpoint
+    Value: !Ref Dbname
+
+  BastionHost:
+    Description: The bastion host address
+    Value: !GetAtt "BastionHost.PublicDnsName"
+
+  DatabaseSecret:
+    Description: The database username and password
+    Value: !Ref DatabaseSecret
