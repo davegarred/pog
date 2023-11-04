@@ -19,7 +19,7 @@ impl Display for Wager {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} vs {}, {} - {}",
+            "{} vs {}, wager: {} - {}",
             self.offering, self.accepting, self.wager, self.outcome
         )
     }
@@ -36,7 +36,7 @@ impl Wager {
             None => self.accepting.to_string(),
         };
         format!(
-            "{} vs {}, {} - {}",
+            "{} vs {}, wager: {} - {}",
             offering, accepting, self.wager, self.outcome
         )
     }

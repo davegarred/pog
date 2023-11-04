@@ -49,9 +49,9 @@ where
             Some(data) => data,
         };
         match name.as_str() {
-            "bet" => self.initiate_bet(request),
-            "bets" => self.list_bets(request).await,
-            "payout" => self.pay_bet(request).await,
+            pog_common::ADD_BET_COMMAND => self.initiate_bet(request),
+            pog_common::LIST_BET_COMMAND => self.list_bets(request).await,
+            pog_common::SETTLE_BET_COMMAND => self.pay_bet(request).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
                 name
@@ -338,7 +338,7 @@ mod test {
             .unwrap();
         let app = Application::new(repository, TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"bet","options":[{"label":"1","value":"1","description":"Harx vs Woody, $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}]}}"#;
+        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"bet","options":[{"label":"1","value":"1","description":"Harx vs Woody, wager: $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}]}}"#;
         assert_response(result, expected);
     }
 
@@ -375,7 +375,7 @@ mod test {
         .unwrap();
         let app = Application::new(repo, client.clone());
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"Bet closed as paid: <@695398918694895710> vs Woody, $20 - Rangers repeat"}}"#;
+        let expected = r#"{"type":4,"data":{"content":"Bet closed as paid: <@695398918694895710> vs Woody, wager: $20 - Rangers repeat"}}"#;
         assert_response(result, expected);
         assert_eq!(None, get_client_message(&client))
     }

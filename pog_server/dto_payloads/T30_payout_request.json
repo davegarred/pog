@@ -18,7 +18,7 @@
   "channel_id": "1165639175018651688",
   "data": {
     "id": "1166780559276654602",
-    "name": "payout",
+    "name": "settle",
     "type": 1
   },
   "entitlement_sku_ids": [],
