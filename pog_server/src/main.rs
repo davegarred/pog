@@ -29,14 +29,17 @@ pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Chargers outright";
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let public_key =
-        std::env::var("DISCORD_PUBLIC_KEY").expect("finding public key from environment");
-    let db_connection = std::env::var("DB_CONNECTION_STRING")
-        .expect("finding db connection string from environment");
-    let application_id =
-        std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
+    // TODO: move these to AWS secrets
+    let db_user = std::env::var("DB_USER").expect("finding db user from environment");
+    let db_pass = std::env::var("DB_PASS").expect("finding db pass from environment");
     let application_token = std::env::var("DISCORD_TOKEN").expect("finding token from environment");
+
+    let public_key = std::env::var("DISCORD_PUBLIC_KEY").expect("finding public key from environment");
+    let application_id = std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
+    let db_name = std::env::var("DB_NAME").expect("finding db name from environment");
+    let db_host = std::env::var("DB_HOST").expect("finding db host from environment");
     let sns_topic = std::env::var("SNS_TOPIC").expect("finding sns topic");
+    let db_connection = format!("postgresql://{}:{}@{}:5432/{}", db_user, db_pass, db_host, db_name);
     let repo = PostgresWagerRepo::new(&db_connection).await;
     let client = DefaultDiscordClient::new(application_id, application_token, sns_topic).await;
     let application = Application::new(repo, client);
