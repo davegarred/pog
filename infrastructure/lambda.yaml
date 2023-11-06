@@ -1,0 +1,195 @@
+Description: Deploys the Lambdas and SNS topic for pog
+
+Parameters:
+  Vpc:
+    Description: The vpc to deploy the lambda
+    Type: String
+  S3Bucket:
+    Description: The S3 bucket containing the lambda binaries
+    Type: String
+  ServerBinaryKey:
+    Description: The S3 key to the pog_server binary
+    Type: String
+  ClientBinaryKey:
+    Description: The S3 key to the pog_client binary
+    Type: String
+  PrivateSubnetIds:
+    Description: The subnet ids for the server lambda
+    Type: List<AWS::EC2::Subnet::Id>
+  DbHost:
+    Description: The host address for the database
+    Type: String
+  DbName:
+    Description: The name for the database
+    Type: String
+  DbUserName:
+    Description: username for the database
+    Type: String
+#  TODO: move to secret manager
+  DbPassword:
+    Description: password for the database
+    Type: String
+  DiscordApplicationId:
+    Description: Discord application id
+    Type: String
+  DiscordPublicKey:
+    Description: Discord public key
+    Type: String
+  #  TODO: move to secret manager
+  DiscordApplicationToken:
+    Description: Discord application auth token
+    Type: String
+
+Resources:
+  ServerLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:CreateLogGroup
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: arn:aws:sns:*:*:*
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                Resource: "*"
+  ClientLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:CreateLogGroup
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                Resource: "*"
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "pog-server-sg"
+      GroupDescription: "Serverless security group"
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
+
+  ClientLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ '-', [ !Ref "AWS::StackName", "pog-client" ] ]
+      Runtime: provided.al2
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref ClientBinaryKey
+      Handler: index.handler
+      MemorySize: 128
+      Timeout: 5
+      Role: !GetAtt ClientLambdaRole.Arn
+      Environment:
+        Variables:
+          SNS_TOPIC: !Ref PogSnsTopic
+          DISCORD_APPLICATION_ID: !Ref DiscordApplicationId
+          DISCORD_TOKEN: !Ref DiscordApplicationToken
+  ClientFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ClientLambda
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+  ClientFunctionSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt ClientLambda.Arn
+      Protocol: lambda
+      TopicArn: !Ref PogSnsTopic
+
+  ServerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ '-', [ !Ref "AWS::StackName", "pog-server" ] ]
+      Runtime: provided.al2
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref ServerBinaryKey
+      Handler: index.handler
+      MemorySize: 128
+      Timeout: 5
+      Role: !GetAtt ServerLambdaRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref ServerSecurityGroup
+        SubnetIds: !Ref PrivateSubnetIds
+      Environment:
+        Variables:
+          DB_HOST: !Ref DbHost
+          DB_NAME: !Ref DbName
+          SNS_TOPIC: !Ref PogSnsTopic
+          DISCORD_APPLICATION_ID: !Ref DiscordApplicationId
+          DISCORD_PUBLIC_KEY: !Ref DiscordPublicKey
+          DB_USER: !Ref DbUserName
+          DB_PASS: !Ref DbPassword
+          DISCORD_TOKEN: !Ref DiscordApplicationToken
+  ServerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ServerLambda
+      FunctionUrlAuthType: 'NONE'
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+  ServerFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      InvokeMode: BUFFERED
+      TargetFunctionArn: !Ref ServerLambda
+  PogSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Join [ '-', [ !Ref "AWS::StackName", "sns-topic" ] ]
+
+Outputs:
+  ServerFunctionUrl:
+    Description: Server function url
+    Value: !GetAtt ServerFunctionUrl.FunctionUrl
