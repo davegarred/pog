@@ -7,10 +7,12 @@ use lambda_http::http::HeaderMap;
 #[derive(Debug, Clone)]
 pub struct VerifyTool {
     key: VerifyingKey,
+    debug_key: Option<String>,
 }
 
 impl VerifyTool {
     pub fn new(key: &str) -> Self {
+        let debug_key: Option<String> = std::env::var("DEBUG_HEADER").ok();
         let bytes = match hex::decode(key) {
             Ok(bytes) => bytes,
             Err(err) => {
@@ -32,13 +34,15 @@ impl VerifyTool {
                 panic!("{:?}", err);
             }
         };
-        Self { key }
+        Self { key, debug_key }
     }
 
     pub fn validate(&self, headers: &HeaderMap, body: &str) -> Result<(), Error> {
-        if headers.get("cut-thru").is_some() {
-            return Ok(());
-        };
+        if let Some(debug_key) = &self.debug_key {
+            if headers.get(debug_key).is_some() {
+                return Ok(());
+            }
+        }
         let signature = match headers.get("X-Signature-Ed25519") {
             None => {
                 println!("missing signature");
