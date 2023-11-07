@@ -9,7 +9,7 @@ pub trait WagerRepository {
     async fn get(&self, wager_id: i32) -> Option<Wager>;
     async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error>;
     async fn search_by_user(&self, user: &str) -> Result<Vec<Wager>, Error>;
-    async fn update_status(&self, wager_id: i32, status: WagerStatus) -> Result<(), Error>;
+    async fn update_status(&self, wager_id: i32, wager: &Wager) -> Result<(), Error>;
 }
 
 #[derive(Debug, Default, Clone)]
@@ -73,7 +73,8 @@ impl WagerRepository for InMemWagerRepository {
         Ok(result)
     }
 
-    async fn update_status(&self, wager_id: i32, status: WagerStatus) -> Result<(), Error> {
+    async fn update_status(&self, wager_id: i32, updated_wager: &Wager) -> Result<(), Error> {
+        let status = updated_wager.status;
         for wager in self.wagers.lock().unwrap().iter_mut() {
             if wager.wager_id == wager_id as u32 {
                 wager.status = status;

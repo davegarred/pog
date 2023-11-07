@@ -72,6 +72,14 @@ where
                         return Err("unable to parse a wager_id from the returned value".into());
                     }
                 };
+                let mut wager = match self.repo.get(wager_id).await {
+                    Some(wager) => wager,
+                    None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
+                };
+                if wager.status != WagerStatus::Open {
+                    return Err(Error::Invalid(format!("wager {} is not open", wager_id)));
+                }
+                wager.status = WagerStatus::Paid;
 
                 let message_id = request.expect_message()?.id.clone();
                 let token = request.token;
@@ -81,11 +89,7 @@ where
                     println!("ERROR sending SNS: {}", msg);
                 }
 
-                self.repo.update_status(wager_id, WagerStatus::Paid).await?;
-                let wager = match self.repo.get(wager_id).await {
-                    Some(wager) => wager,
-                    None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
-                };
+                self.repo.update_status(wager_id, &wager).await?;
                 let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
                 return Ok(message.into());
             }

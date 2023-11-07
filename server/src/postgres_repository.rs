@@ -91,9 +91,10 @@ impl WagerRepository for PostgresWagerRepo {
         Ok(result)
     }
 
-    async fn update_status(&self, wager_id: i32, status: WagerStatus) -> Result<(), Error> {
+    async fn update_status(&self, wager_id: i32, wager: &Wager) -> Result<(), Error> {
+        let status = wager.status.as_i16();
         sqlx::query(UPDATE_STATUS)
-            .bind(status.as_i16())
+            .bind(status)
             .bind(wager_id)
             .execute(&self.pool)
             .await
