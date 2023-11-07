@@ -3,7 +3,8 @@ resolver = "2"
 members = [
     "pog_server",
     "pog_client",
-    "pog_common"
+    "pog_common",
+    "commands",
 ]
 
 [patch.crates-io]

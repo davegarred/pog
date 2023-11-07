@@ -108,7 +108,7 @@ Resources:
   ServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: "pog-server-sg"
+      GroupName: !Join [ '-', [ !Ref "AWS::StackName", "server-sg" ] ]
       GroupDescription: "Serverless security group"
       VpcId: !Ref Vpc
       SecurityGroupEgress:

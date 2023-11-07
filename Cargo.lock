@@ -975,6 +975,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "commands"
+version = "0.1.0"
+dependencies = [
+ "pog_common",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2029,6 +2040,7 @@ dependencies = [
 name = "pog_common"
 version = "0.1.0"
 dependencies = [
+ "reqwest",
  "serde",
  "serde_json",
 ]

@@ -8,7 +8,9 @@ clean:
 	cargo clean
 
 build:
-	cargo build --target x86_64-unknown-linux-musl --release 
+	cargo build --target x86_64-unknown-linux-musl --release --bin pog
+	cargo build --target x86_64-unknown-linux-musl --release --bin pog_client
+	cargo build --release --bin commands
 
 deploy: check-env build
 	cp target/x86_64-unknown-linux-musl/release/pog bootstrap
