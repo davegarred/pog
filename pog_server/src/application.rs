@@ -98,7 +98,10 @@ where
         request: DiscordRequest,
     ) -> Result<DiscordResponse, Error> {
         let user = expect_member_user(&request)?;
-        let offering = user.global_name.to_string();
+        let offering = match &user.global_name {
+            None => user.username.to_string(),
+            Some(global_name) => global_name.to_string(),
+        };
         let resolved_offering_user = DiscordId::from_raw_str(&user.id);
         let data = expect_data(&request)?;
         let (accepting, resolved_accepting_user) = match &data.custom_id {
@@ -136,7 +139,11 @@ where
         let accepting_user_payload: String = match DiscordId::attempt_from_str(&accepting) {
             Some(id) => {
                 let user = expect_resolved_user(&id, &request)?;
-                combine_user_payload(&user.global_name, Some(id))
+                let user_name = match &user.global_name {
+                    None => &user.username,
+                    Some(global_name) => global_name,
+                };
+                combine_user_payload(user_name, Some(id))
             }
             None => accepting,
         };
@@ -316,6 +323,17 @@ mod test {
         );
         let result = app.request_handler(request).await.unwrap();
         assert_eq!(result, message_response("Harx has no outstanding wagers"))
+    }
+
+    #[tokio::test]
+    async fn first_bug() {
+        let request = expect_request_from("dto_payloads/first_bug.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            TestDiscordClient::default(),
+        );
+        let result = app.request_handler(request).await.unwrap();
+        assert_eq!(result, message_response("johnanon has no outstanding wagers"))
     }
 
     #[tokio::test]

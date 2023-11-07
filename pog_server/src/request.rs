@@ -87,7 +87,8 @@ pub struct DiscordMember {
 pub struct DiscordUser {
     pub id: String,
     pub username: String,
-    pub global_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_name: Option<String>,
     pub avatar: String,
 }
 
@@ -110,7 +111,7 @@ mod test {
     }
 
     #[test]
-    fn test_bet_request() {
+    fn bet_request() {
         let contents = fs::read_to_string("dto_payloads/interaction_request.json").unwrap();
         let _request: DiscordRequest = serde_json::from_str(&contents).unwrap();
     }
@@ -122,14 +123,20 @@ mod test {
     }
 
     #[test]
-    fn test_payout_request() {
+    fn payout_request() {
         let contents = fs::read_to_string("dto_payloads/T30_payout_request.json").unwrap();
         let _request: DiscordRequest = serde_json::from_str(&contents).unwrap();
     }
 
     #[test]
-    fn test_select_option_request() {
+    fn select_option_request() {
         let contents = fs::read_to_string("dto_payloads/select_option_request.json").unwrap();
+        let _request: DiscordRequest = serde_json::from_str(&contents).unwrap();
+    }
+
+    #[test]
+    fn first_bug() {
+        let contents = fs::read_to_string("dto_payloads/first_bug.json").unwrap();
         let _request: DiscordRequest = serde_json::from_str(&contents).unwrap();
     }
 }
