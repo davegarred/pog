@@ -1,0 +1,68 @@
+{
+  "app_permissions": "559520526223936",
+  "application_id": "1150846692963405824",
+  "channel": {
+    "flags": 0,
+    "guild_id": "1150922826463846521",
+    "id": "1165639175018651688",
+    "last_message_id": "1166467057261486080",
+    "name": "wagers",
+    "nsfw": false,
+    "parent_id": "1150922826463846522",
+    "permissions": "562949953421311",
+    "position": 2,
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "type": 0
+  },
+  "channel_id": "1165639175018651688",
+  "data": {
+    "id": "1165494543471353917",
+    "name": "bets",
+    "options": [
+      {
+        "name": "bettor",
+        "type": 3,
+        "value": "Woody"
+      }
+    ],
+    "type": 1
+  },
+  "entitlement_sku_ids": [],
+  "entitlements": [],
+  "guild": {
+    "features": [],
+    "id": "1150922826463846521",
+    "locale": "en-US"
+  },
+  "guild_id": "1150922826463846521",
+  "guild_locale": "en-US",
+  "id": "1166536129114275910",
+  "locale": "en-US",
+  "member": {
+    "avatar": null,
+    "communication_disabled_until": null,
+    "deaf": false,
+    "flags": 0,
+    "joined_at": "2023-09-11T22:36:24.955000+00:00",
+    "mute": false,
+    "nick": null,
+    "pending": false,
+    "permissions": "562949953421311",
+    "premium_since": null,
+    "roles": [],
+    "unusual_dm_activity_until": null,
+    "user": {
+      "avatar": "885a4f4855b4857e23d5b010dd4d3646",
+      "avatar_decoration_data": null,
+      "discriminator": "6401",
+      "global_name": "Harx",
+      "id": "695398918694895710",
+      "public_flags": 0,
+      "username": "Harx"
+    }
+  },
+  "token": "aW50ZXJhY3Rpb246MTE2NjUzNjEyOTExNDI3NTkxMDpLUlZ4eDQ2VDhNVDI5OHJLSkxyUVg2VldQbEdTQXJUTFB6MGZmOVJINk9pSHJKaENVWEoxOGllUVoxdVdOZDk2TjFmV3laMFZmNFhwYzE5UXo3d3BqS1ZpdVJHNmFlMUo0UmVRTjBZQzlrcEMxa3F3OEhRcXhnTmNjalAyZ3AyaA",
+  "type": 2,
+  "version": 1
+}

@@ -18,7 +18,7 @@ pub fn discord_headers(authorization: &Authorization) -> HeaderMap {
     );
     headers.insert(
         "User-Agent",
-        "DiscordBot (https://github.com/davegarred/pog_server, 0.1.0)"
+        "DiscordBot (https://github.com/davegarred/server, 0.1.0)"
             .parse()
             .unwrap(),
     );

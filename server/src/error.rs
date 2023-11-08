@@ -1,5 +1,7 @@
 use std::fmt::{Display, Formatter};
 
+use discord_api::InteractionError;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     NotAuthorized,
@@ -26,5 +28,19 @@ impl std::error::Error for Error {}
 impl From<sqlx::Error> for Error {
     fn from(value: sqlx::Error) -> Self {
         Error::DatabaseFailure(value.to_string())
+    }
+}
+
+impl From<InteractionError> for Error {
+    fn from(error: InteractionError) -> Self {
+        match error {
+            InteractionError::MissingComponent(parent, component) => {
+                let message = format!(
+                    "expected a '{}' field on the '{}' object",
+                    component, parent
+                );
+                Error::Invalid(message)
+            }
+        }
     }
 }

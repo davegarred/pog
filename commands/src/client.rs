@@ -54,7 +54,7 @@ impl DiscordClient {
         print_response(response).await;
     }
 }
-async fn print_response(response: Result<reqwest::Response,reqwest::Error>) {
+async fn print_response(response: Result<reqwest::Response, reqwest::Error>) {
     match response {
         Ok(result) => {
             let result = result.bytes().await.unwrap();

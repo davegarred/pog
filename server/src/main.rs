@@ -6,11 +6,12 @@ use axum::Router;
 use lambda_http::http::HeaderMap;
 use lambda_http::{run, Error};
 
+use discord_api::interaction_request::InteractionObject;
+use discord_api::interaction_response::InteractionResponse;
+
 use crate::application::Application;
 use crate::default_discord_client::DefaultDiscordClient;
 use crate::postgres_repository::PostgresWagerRepo;
-use crate::request::DiscordRequest;
-use crate::response::{message_response, DiscordResponse};
 use crate::verify::VerifyTool;
 
 mod application;
@@ -19,7 +20,6 @@ mod discord_client;
 mod discord_id;
 mod error;
 mod postgres_repository;
-mod request;
 mod response;
 mod verify;
 mod wager;
@@ -72,7 +72,7 @@ async fn lambda_command_handler(
 ) -> Result<Response, (StatusCode, String)> {
     println!("POST body: {}", body);
     match route(state, headers, body).await {
-        Ok(response) => Ok(response.str_response().into_response()),
+        Ok(response) => Ok(str_response(response).into_response()),
         Err(err) => match err {
             error::Error::NotAuthorized => Ok((StatusCode::UNAUTHORIZED).into_response()),
             error::Error::Invalid(message) => {
@@ -88,11 +88,25 @@ async fn lambda_command_handler(
                 Ok((StatusCode::INTERNAL_SERVER_ERROR).into_response())
             }
             error::Error::UnresolvedDiscordUser => {
-                Ok(message_response("not a user in this channel")
-                    .str_response()
-                    .into_response())
+                Ok(str_response("not a user in this channel".into()).into_response())
             }
         },
+    }
+}
+
+fn str_response(response: InteractionResponse) -> axum::http::Response<String> {
+    let payload = serde_json::to_string(&response).unwrap();
+    println!("response: {}", payload);
+    match axum::response::Response::builder()
+        .status(axum::http::StatusCode::OK)
+        .header("Content-Type", "application/json")
+        .body(payload)
+    {
+        Ok(result) => result,
+        Err(err) => {
+            println!("error building response from discord response");
+            panic!("{}", err)
+        }
     }
 }
 
@@ -100,9 +114,9 @@ async fn route(
     state: AppState,
     headers: HeaderMap,
     body: String,
-) -> Result<DiscordResponse, error::Error> {
+) -> Result<InteractionResponse, error::Error> {
     state.verifier.validate(&headers, &body)?;
-    let request: DiscordRequest = match serde_json::from_str::<DiscordRequest>(&body) {
+    let request: InteractionObject = match serde_json::from_str::<InteractionObject>(&body) {
         Ok(request) => request,
         Err(_) => return Err("unable to deserialize body".into()),
     };

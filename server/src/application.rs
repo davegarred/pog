@@ -1,16 +1,10 @@
-use std::collections::HashMap;
+use discord_api::interaction_request::InteractionObject;
+use discord_api::interaction_response::InteractionResponse;
 
 use crate::discord_client::DiscordClient;
 use crate::discord_id::{combine_user_payload, split_combined_user_payload, DiscordId};
 use crate::error::Error;
-use crate::request::{
-    DiscordRequest, DiscordUser, InteractionComponent, InteractionData, InteractionOption,
-    RequestMessage,
-};
-use crate::response::{
-    message_response, open_buy_modal, open_select_wager_for_close_choices, ping_response,
-    DiscordResponse,
-};
+use crate::response::{open_buy_modal, open_select_wager_for_close_choices};
 use crate::wager::{Wager, WagerStatus};
 use crate::wager_repository::WagerRepository;
 
@@ -29,9 +23,12 @@ where
         Self { repo, client }
     }
 
-    pub async fn request_handler(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
+    pub async fn request_handler(
+        &self,
+        request: InteractionObject,
+    ) -> Result<InteractionResponse, Error> {
         match request.response_type {
-            1 => Ok(ping_response()),
+            1 => Ok(InteractionResponse::ping_response()),
             2 => self.command_handler(request).await,
             3 => self.select_choice_handler(request).await,
             5 => self.modal_response_handler(request).await,
@@ -42,8 +39,11 @@ where
         }
     }
 
-    pub async fn command_handler(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
-        let data = expect_data(&request)?;
+    pub async fn command_handler(
+        &self,
+        request: InteractionObject,
+    ) -> Result<InteractionResponse, Error> {
+        let data = request.expect_data()?;
         let name = match &data.name {
             None => return Err("data object is missing name field where expected".into()),
             Some(data) => data,
@@ -61,9 +61,9 @@ where
 
     pub async fn select_choice_handler(
         &self,
-        request: DiscordRequest,
-    ) -> Result<DiscordResponse, Error> {
-        let data = expect_data(&request)?;
+        request: InteractionObject,
+    ) -> Result<InteractionResponse, Error> {
+        let data = request.expect_data()?;
         if let Some(values) = &data.values {
             if let Some(wager_id) = values.get(0) {
                 let wager_id = match wager_id.parse::<i32>() {
@@ -73,7 +73,7 @@ where
                     }
                 };
 
-                let message_id = expect_request_message(&request)?.id.clone();
+                let message_id = request.expect_message()?.id.clone();
                 let token = request.token;
                 if let Err(Error::ClientFailure(msg)) =
                     self.client.delete_message(&message_id, &token).await
@@ -87,7 +87,7 @@ where
                     None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
                 };
                 let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
-                return Ok(message_response(message));
+                return Ok(message.into());
             }
         }
         Err("missing response to bet closing reason selection".into())
@@ -95,21 +95,21 @@ where
 
     pub async fn modal_response_handler(
         &self,
-        request: DiscordRequest,
-    ) -> Result<DiscordResponse, Error> {
-        let user = expect_member_user(&request)?;
+        request: InteractionObject,
+    ) -> Result<InteractionResponse, Error> {
+        let user = request.expect_member()?.expect_user()?;
         let offering = match &user.global_name {
             None => user.username.to_string(),
             Some(global_name) => global_name.to_string(),
         };
         let resolved_offering_user = DiscordId::from_raw_str(&user.id);
-        let data = expect_data(&request)?;
+        let data = request.expect_data()?;
         let (accepting, resolved_accepting_user) = match &data.custom_id {
             Some(combined_user_data) => split_combined_user_payload(combined_user_data),
             None => return Err("custom_id needed for modal handler but not found".into()),
         };
 
-        let components = collect_components(data)?;
+        let components = data.collect_components()?;
         let (wager, outcome) = match (components.get("wager"), components.get("outcome")) {
             (Some(wager), Some(outcome)) => (wager.to_string(), outcome.to_string()),
             (_, _) => return Err("missing components needed to place wager".into()),
@@ -129,16 +129,23 @@ where
 
         let response_message = wager.to_resolved_string();
         self.repo.insert(wager).await?;
-        Ok(message_response(response_message))
+        Ok(response_message.into())
     }
 
-    pub fn initiate_bet(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
-        let data = expect_data(&request)?;
-        let option = expect_option_at(data, 0)?;
+    pub fn initiate_bet(&self, request: InteractionObject) -> Result<InteractionResponse, Error> {
+        let data = request.expect_data()?;
+        let option = match data.expect_options()?.get(0) {
+            Some(option) => option,
+            None => return Err("bet command sent with empty options".into()),
+        };
+
         let accepting = option.value.to_string();
         let accepting_user_payload: String = match DiscordId::attempt_from_str(&accepting) {
             Some(id) => {
-                let user = expect_resolved_user(&id, &request)?;
+                let user = request
+                    .expect_data()?
+                    .expect_resolved_data()?
+                    .expect_user(&id.str_value())?;
                 let user_name = match &user.global_name {
                     None => &user.username,
                     Some(global_name) => global_name,
@@ -150,21 +157,31 @@ where
         Ok(open_buy_modal(accepting_user_payload))
     }
 
-    pub async fn list_bets(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
-        let data = expect_data(&request)?;
-        let option = expect_option_at(data, 0)?;
+    pub async fn list_bets(
+        &self,
+        request: InteractionObject,
+    ) -> Result<InteractionResponse, Error> {
+        let data = request.expect_data()?;
+        let option = match data.expect_options()?.get(0) {
+            Some(option) => option,
+            None => return Err("bet command sent with empty options".into()),
+        };
+
         let user_id = match DiscordId::attempt_from_str(&option.value) {
             Some(id) => id,
             None => return Err(Error::UnresolvedDiscordUser),
         };
-        let username = expect_resolved_user(&user_id, &request)?;
+        let username = request
+            .expect_data()?
+            .expect_resolved_data()?
+            .expect_user(&user_id.str_value())?;
         let wagers = match DiscordId::attempt_from_str(&option.value) {
             Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
             None => vec![],
         };
         if wagers.is_empty() {
             let message = format!("{} has no outstanding wagers", username.username);
-            return Ok(message_response(message));
+            return Ok(message.as_str().into());
         }
         let mut message = format!(
             "{} has {} outstanding wagers:",
@@ -174,110 +191,32 @@ where
         for wager in wagers {
             message.push_str(format!("\n- {}", wager).as_str());
         }
-        Ok(message_response(message))
+        Ok(message.into())
     }
 
-    pub async fn pay_bet(&self, request: DiscordRequest) -> Result<DiscordResponse, Error> {
-        let user = expect_member_user(&request)?;
+    pub async fn pay_bet(&self, request: InteractionObject) -> Result<InteractionResponse, Error> {
+        let user = request.expect_member()?.expect_user()?;
         let wagers = match DiscordId::from_raw_str(&user.id) {
             Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
             None => vec![],
         };
         if wagers.is_empty() {
-            Ok(message_response("You have no open bets"))
+            Ok("You have no open bets".into())
         } else {
             Ok(open_select_wager_for_close_choices(wagers))
         }
     }
 }
 
-fn expect_data(request: &DiscordRequest) -> Result<&InteractionData, Error> {
-    match &request.data {
-        Some(data) => Ok(data),
-        None => Err("command sent with no data".into()),
-    }
-}
-
-fn expect_option_at(data: &InteractionData, index: usize) -> Result<&InteractionOption, Error> {
-    match &data.options {
-        Some(options) => match options.get(index) {
-            Some(option) => Ok(option),
-            None => Err("bet command sent with empty options".into()),
-        },
-        None => Err("bet command sent with no options".into()),
-    }
-}
-
-fn collect_components(data: &InteractionData) -> Result<HashMap<String, String>, Error> {
-    match &data.components {
-        Some(components) => Ok(collect_components_recurse(components)?),
-        None => Err("expected components but none found".into()),
-    }
-}
-
-fn collect_components_recurse(
-    components: &Vec<InteractionComponent>,
-) -> Result<HashMap<String, String>, Error> {
-    let mut result = HashMap::new();
-
-    for component in components {
-        match &component.components {
-            Some(components) => {
-                for (key, value) in collect_components_recurse(components)? {
-                    result.insert(key, value);
-                }
-            }
-            None => {
-                if let (Some(key), Some(value)) = (&component.custom_id, &component.value) {
-                    result.insert(key.to_string(), value.to_string());
-                }
-            }
-        };
-    }
-    Ok(result)
-}
-
-fn expect_member_user(data: &DiscordRequest) -> Result<&DiscordUser, Error> {
-    match &data.member {
-        Some(member) => Ok(&member.user),
-        None => Err("expected a member field on this request".into()),
-    }
-}
-
-fn expect_request_message(data: &DiscordRequest) -> Result<&RequestMessage, Error> {
-    match &data.message {
-        Some(message) => Ok(message),
-        None => Err("expected a request message on this request".into()),
-    }
-}
-
-fn expect_resolved_user<'a>(
-    id: &DiscordId,
-    request: &'a DiscordRequest,
-) -> Result<&'a DiscordUser, Error> {
-    let data = expect_data(request)?;
-    if let Some(resolved) = &data.resolved {
-        if let Some(user) = resolved.users.get(&id.str_value()) {
-            return Ok(user);
-        }
-    }
-    Err(Error::UnresolvedDiscordUser)
-}
-
-#[test]
-fn test_expect_resolved_user() {
-    // TODO
-    todo!()
-}
-
 #[cfg(test)]
 mod test {
     use std::fs;
 
+    use discord_api::interaction_request::InteractionObject;
+    use discord_api::interaction_response::InteractionResponse;
+
     use crate::application::Application;
     use crate::discord_client::TestDiscordClient;
-    use crate::request::DiscordRequest;
-    use crate::response::{message_response, DiscordResponse};
     use crate::wager::{Wager, WagerStatus};
     use crate::wager_repository::{InMemWagerRepository, WagerRepository};
 
@@ -289,7 +228,9 @@ mod test {
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
-        assert_eq!(1, result.response_type);
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(&found, r#"{"type":1}"#);
     }
 
     #[tokio::test]
@@ -300,7 +241,12 @@ mod test {
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
-        assert_eq!(9, result.response_type);
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            &found,
+            r#"{"type":9,"data":{"custom_id":"1050119194533961860|Cisco","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"Jets beat the Chargers outright","style":2,"min_length":3,"max_length":100}]}]}}"#
+        );
     }
 
     #[tokio::test]
@@ -311,7 +257,12 @@ mod test {
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
-        assert_eq!(4, result.response_type);
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            &found,
+            r#"{"type":4,"data":{"content":"<@695398918694895710> vs <@695398918694895710>, wager: $20 - something something"}}"#
+        );
     }
 
     #[tokio::test]
@@ -322,18 +273,19 @@ mod test {
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
-        assert_eq!(result, message_response("Harx has no outstanding wagers"))
+        assert_eq!(result, "Harx has no outstanding wagers".into())
     }
 
     #[tokio::test]
     async fn first_bug() {
-        let request = expect_request_from("dto_payloads/first_bug.json");
+        let request =
+            expect_request_from("dto_payloads/T20_list_bets_request_w_no_global_user.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
-        assert_eq!(result, message_response("johnanon has no outstanding wagers"))
+        assert_eq!(result, "johnanon has no outstanding wagers".into())
     }
 
     #[tokio::test]
@@ -406,13 +358,13 @@ mod test {
         client.message.lock().unwrap().clone()
     }
 
-    fn expect_request_from(filename: &str) -> DiscordRequest {
+    fn expect_request_from(filename: &str) -> InteractionObject {
         let contents = fs::read_to_string(filename).unwrap();
-        let request: DiscordRequest = serde_json::from_str(&contents).unwrap();
+        let request: InteractionObject = serde_json::from_str(&contents).unwrap();
         request
     }
 
-    fn assert_response(response: DiscordResponse, expected: &str) {
+    fn assert_response(response: InteractionResponse, expected: &str) {
         let ser = serde_json::to_string(&response).unwrap();
         assert_eq!(ser.as_str(), expected);
     }

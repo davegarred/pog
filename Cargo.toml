@@ -1,11 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "pog_server",
-    "pog_client",
-    "pog_common",
+    "server",
+    "client",
+    "common",
     "commands",
+    "discord_api",
 ]
 
 [patch.crates-io]
-pog_common = { path = "./pog_common" }
+pog_common = { path = "common" }
+discord_api =  { path = "discord_api" }
