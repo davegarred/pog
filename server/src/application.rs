@@ -1,5 +1,9 @@
-use discord_api::interaction_request::InteractionObject;
+use discord_api::interaction_request::{
+    ApplicationCommandInteractionData, InteractionData, InteractionObject,
+    MessageComponentInteractionData, ModalSubmitInteractionData, User,
+};
 use discord_api::interaction_response::InteractionResponse;
+use discord_api::InteractionError;
 
 use crate::discord_client::DiscordClient;
 use crate::discord_id::{combine_user_payload, split_combined_user_payload, DiscordId};
@@ -27,91 +31,93 @@ where
         &self,
         request: InteractionObject,
     ) -> Result<InteractionResponse, Error> {
-        match request.response_type {
-            1 => Ok(InteractionResponse::ping_response()),
-            2 => self.command_handler(request).await,
-            3 => self.select_choice_handler(request).await,
-            5 => self.modal_response_handler(request).await,
+        match request.get_data()? {
+            InteractionData::Ping => Ok(InteractionResponse::ping_response()),
+            InteractionData::Command(data) => {
+                self.command_handler(data, request.expect_member()?.expect_user()?)
+                    .await
+            }
+            InteractionData::Message(data) => self.select_choice_handler(data, request).await,
+            // InteractionData::CommandAutocomplete(data) => {}
+            InteractionData::ModalSubmit(data) => {
+                self.modal_response_handler(data, request.expect_member()?.expect_user()?)
+                    .await
+            }
             _ => Err(Error::Invalid(format!(
                 "unknown response type: {}",
-                request.response_type
+                request.interaction_type
             ))),
         }
     }
 
     pub async fn command_handler(
         &self,
-        request: InteractionObject,
+        data: ApplicationCommandInteractionData,
+        user: &User,
     ) -> Result<InteractionResponse, Error> {
-        let data = request.expect_data()?;
-        let name = match &data.name {
-            None => return Err("data object is missing name field where expected".into()),
-            Some(data) => data,
-        };
-        match name.as_str() {
-            pog_common::ADD_BET_COMMAND => self.initiate_bet(request),
-            pog_common::LIST_BET_COMMAND => self.list_bets(request).await,
-            pog_common::SETTLE_BET_COMMAND => self.pay_bet(request).await,
+        match data.name.as_str() {
+            pog_common::ADD_BET_COMMAND => self.initiate_bet(data),
+            pog_common::LIST_BET_COMMAND => self.list_bets(data).await,
+            pog_common::SETTLE_BET_COMMAND => self.pay_bet(data, user).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
-                name
+                data.name
             ))),
         }
     }
 
     pub async fn select_choice_handler(
         &self,
+        data: MessageComponentInteractionData,
         request: InteractionObject,
     ) -> Result<InteractionResponse, Error> {
-        let data = request.expect_data()?;
-        if let Some(values) = &data.values {
-            if let Some(wager_id) = values.get(0) {
-                let wager_id = match wager_id.parse::<i32>() {
-                    Ok(wager_id) => wager_id,
-                    Err(_) => {
-                        return Err("unable to parse a wager_id from the returned value".into());
-                    }
-                };
-                let mut wager = match self.repo.get(wager_id).await {
-                    Some(wager) => wager,
-                    None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
-                };
-                if wager.status != WagerStatus::Open {
-                    return Err(Error::Invalid(format!("wager {} is not open", wager_id)));
-                }
-                wager.status = WagerStatus::Paid;
-
-                let message_id = request.expect_message()?.id.clone();
-                let token = request.token;
-                if let Err(Error::ClientFailure(msg)) =
-                    self.client.delete_message(&message_id, &token).await
-                {
-                    println!("ERROR sending SNS: {}", msg);
-                }
-
-                self.repo.update_status(wager_id, &wager).await?;
-                let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
-                return Ok(message.into());
+        let wager_id = match data.values.get(0) {
+            Some(wager_id) => wager_id,
+            None => return Err("missing response to bet closing reason selection".into()),
+        };
+        let wager_id = match wager_id.parse::<i32>() {
+            Ok(wager_id) => wager_id,
+            Err(_) => {
+                return Err("unable to parse a wager_id from the returned value".into());
             }
+        };
+        let mut wager = match self.repo.get(wager_id).await {
+            Some(wager) => wager,
+            None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
+        };
+        if wager.status != WagerStatus::Open {
+            return Err(Error::Invalid(format!("wager {} is not open", wager_id)));
         }
-        Err("missing response to bet closing reason selection".into())
+        wager.status = WagerStatus::Paid;
+
+        let message_id = request
+            .message
+            .ok_or::<InteractionError>("no message in request".into())?
+            .id
+            .clone();
+        let token = request.token;
+        if let Err(Error::ClientFailure(msg)) =
+            self.client.delete_message(&message_id, &token).await
+        {
+            println!("ERROR sending SNS: {}", msg);
+        }
+
+        self.repo.update_status(wager_id, &wager).await?;
+        let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
+        Ok(message.into())
     }
 
     pub async fn modal_response_handler(
         &self,
-        request: InteractionObject,
+        data: ModalSubmitInteractionData,
+        user: &User,
     ) -> Result<InteractionResponse, Error> {
-        let user = request.expect_member()?.expect_user()?;
         let offering = match &user.global_name {
             None => user.username.to_string(),
             Some(global_name) => global_name.to_string(),
         };
         let resolved_offering_user = DiscordId::from_raw_str(&user.id);
-        let data = request.expect_data()?;
-        let (accepting, resolved_accepting_user) = match &data.custom_id {
-            Some(combined_user_data) => split_combined_user_payload(combined_user_data),
-            None => return Err("custom_id needed for modal handler but not found".into()),
-        };
+        let (accepting, resolved_accepting_user) = split_combined_user_payload(&data.custom_id);
 
         let components = data.collect_components()?;
         let (wager, outcome) = match (components.get("wager"), components.get("outcome")) {
@@ -136,9 +142,11 @@ where
         Ok(response_message.into())
     }
 
-    pub fn initiate_bet(&self, request: InteractionObject) -> Result<InteractionResponse, Error> {
-        let data = request.expect_data()?;
-        let option = match data.expect_options()?.get(0) {
+    pub fn initiate_bet(
+        &self,
+        data: ApplicationCommandInteractionData,
+    ) -> Result<InteractionResponse, Error> {
+        let option = match data.options.get(0) {
             Some(option) => option,
             None => return Err("bet command sent with empty options".into()),
         };
@@ -146,10 +154,10 @@ where
         let accepting = option.value.to_string();
         let accepting_user_payload: String = match DiscordId::attempt_from_str(&accepting) {
             Some(id) => {
-                let user = request
-                    .expect_data()?
-                    .expect_resolved_data()?
-                    .expect_user(&id.str_value())?;
+                let resolved_data = data
+                    .resolved
+                    .ok_or::<InteractionError>("missing resolved data".into())?;
+                let user = resolved_data.expect_user(&id.str_value())?;
                 let user_name = match &user.global_name {
                     None => &user.username,
                     Some(global_name) => global_name,
@@ -163,10 +171,9 @@ where
 
     pub async fn list_bets(
         &self,
-        request: InteractionObject,
+        data: ApplicationCommandInteractionData,
     ) -> Result<InteractionResponse, Error> {
-        let data = request.expect_data()?;
-        let option = match data.expect_options()?.get(0) {
+        let option = match data.options.get(0) {
             Some(option) => option,
             None => return Err("bet command sent with empty options".into()),
         };
@@ -175,10 +182,10 @@ where
             Some(id) => id,
             None => return Err(Error::UnresolvedDiscordUser),
         };
-        let username = request
-            .expect_data()?
-            .expect_resolved_data()?
-            .expect_user(&user_id.str_value())?;
+        let resolved_data = data
+            .resolved
+            .ok_or::<InteractionError>("missing resolved data".into())?;
+        let username = resolved_data.expect_user(&user_id.str_value())?;
         let wagers = match DiscordId::attempt_from_str(&option.value) {
             Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
             None => vec![],
@@ -198,8 +205,11 @@ where
         Ok(message.into())
     }
 
-    pub async fn pay_bet(&self, request: InteractionObject) -> Result<InteractionResponse, Error> {
-        let user = request.expect_member()?.expect_user()?;
+    pub async fn pay_bet(
+        &self,
+        _data: ApplicationCommandInteractionData,
+        user: &User,
+    ) -> Result<InteractionResponse, Error> {
         let wagers = match DiscordId::from_raw_str(&user.id) {
             Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
             None => vec![],

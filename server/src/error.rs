@@ -33,14 +33,13 @@ impl From<sqlx::Error> for Error {
 
 impl From<InteractionError> for Error {
     fn from(error: InteractionError) -> Self {
-        match error {
-            InteractionError::MissingComponent(parent, component) => {
-                let message = format!(
-                    "expected a '{}' field on the '{}' object",
-                    component, parent
-                );
-                Error::Invalid(message)
-            }
-        }
+        let message = match error {
+            InteractionError::MissingComponent(parent, component) => format!(
+                "expected a '{}' field on the '{}' object",
+                component, parent
+            ),
+            InteractionError::InvalidRequestPayload(message) => message,
+        };
+        Error::Invalid(message)
     }
 }

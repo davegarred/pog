@@ -96,7 +96,6 @@ mod test {
         let to_sign = format!("{}{}", timestamp, body);
         let signature = signing_key.sign(to_sign.as_bytes());
         let header_sig = signature.to_string();
-        println!("signature: {}\n", header_sig);
 
         assert!(verifier.verify(timestamp, body, header_sig.as_str()));
     }
