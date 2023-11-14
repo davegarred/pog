@@ -19,13 +19,19 @@ impl InteractionResponse {
     }
 
     pub fn message_response(content: String) -> InteractionResponse {
-        Self::select_response(content, vec![])
+        InteractionResponse {
+            response_type: 4,
+            data: Some(InteractionCallbackData::message_callback(
+                Some(content),
+                vec![],
+            )),
+        }
     }
 
     pub fn select_response(content: String, components: Vec<Component>) -> InteractionResponse {
         InteractionResponse {
             response_type: 4,
-            data: Some(InteractionCallbackData::message_callback(
+            data: Some(InteractionCallbackData::ephemeral_message_callback(
                 Some(content),
                 components,
             )),

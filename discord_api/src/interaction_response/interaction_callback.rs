@@ -1,6 +1,6 @@
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-data-structure
 
-use crate::interaction_response::Component;
+use crate::interaction_response::{message_flags, Component};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
@@ -17,6 +17,8 @@ pub struct MessageCallbackData {
     content: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     components: Vec<Component>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    flags: Option<u32>,
 }
 
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-autocomplete
@@ -39,6 +41,14 @@ impl InteractionCallbackData {
         Self::Message(MessageCallbackData {
             content,
             components,
+            flags: None,
+        })
+    }
+    pub fn ephemeral_message_callback(content: Option<String>, components: Vec<Component>) -> Self {
+        Self::Message(MessageCallbackData {
+            content,
+            components,
+            flags: Some(message_flags::EPHEMERAL),
         })
     }
     // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal

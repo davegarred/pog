@@ -280,7 +280,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn list_bets_response() {
+    async fn list_bets_no_bets() {
         let request = expect_request_from("dto_payloads/T20_list_bets_request.json");
         let app = Application::new(
             InMemWagerRepository::default(),
@@ -291,7 +291,32 @@ mod test {
     }
 
     #[tokio::test]
-    async fn first_bug() {
+    async fn list_bets() {
+        let request = expect_request_from("dto_payloads/T20_list_bets_request.json");
+        let repo = InMemWagerRepository::default();
+        repo.insert(Wager {
+            wager_id: 109,
+            time: "".to_string(),
+            offering: "----".to_string(),
+            resolved_offering_user: Some(695398918694895710.into()),
+            accepting: "Woody".to_string(),
+            resolved_accepting_user: None,
+            wager: "$20".to_string(),
+            outcome: "Rangers repeat".to_string(),
+            status: WagerStatus::Open,
+        })
+        .await
+        .unwrap();
+        let app = Application::new(repo, TestDiscordClient::default());
+        let result = app.request_handler(request).await.unwrap();
+        assert_eq!(
+            result,
+            "Harx has 1 outstanding wagers:\n- ---- vs Woody, wager: $20 - Rangers repeat".into()
+        )
+    }
+
+    #[tokio::test]
+    async fn list_bets_no_global_user() {
         let request =
             expect_request_from("dto_payloads/T20_list_bets_request_w_no_global_user.json");
         let app = Application::new(
@@ -322,7 +347,7 @@ mod test {
             .unwrap();
         let app = Application::new(repository, TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"bet","options":[{"label":"1","value":"1","description":"Harx vs Woody, wager: $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}]}}"#;
+        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"bet","options":[{"label":"1","value":"1","description":"Harx vs Woody, wager: $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}],"flags":64}}"#;
         assert_response(result, expected);
     }
 

@@ -1,0 +1,11 @@
+pub const CROSSPOSTED: u32 = 1;
+pub const IS_CROSSPOST: u32 = 2;
+pub const SUPPRESS_EMBEDS: u32 = 4;
+pub const SOURCE_MESSAGE_DELETED: u32 = 8;
+pub const URGENT: u32 = 16;
+pub const HAS_THREAD: u32 = 32;
+pub const EPHEMERAL: u32 = 64;
+pub const LOADING: u32 = 128;
+pub const FAILED_TO_MENTION_SOME_ROLES_IN_THREAD: u32 = 256;
+pub const SUPPRESS_NOTIFICATIONS: u32 = 512;
+pub const IS_VOICE_MESSAGE: u32 = 1024;

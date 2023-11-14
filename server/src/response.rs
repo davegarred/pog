@@ -59,7 +59,6 @@ pub fn open_select_wager_for_close_choices(wagers: Vec<Wager>) -> InteractionRes
     let mut options: Vec<SelectMenuOption> = Default::default();
     for wager in wagers {
         let value = format!("{}", wager.wager_id);
-        // let value = format!("{}", wager.wager_id);
         let description = wager.to_string();
         options.push(SelectMenuOption::new(value.clone(), value, description));
     }
