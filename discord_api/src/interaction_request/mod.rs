@@ -38,12 +38,6 @@ mod test {
     }
 
     #[test]
-    fn test_bet_modal_request() {
-        let contents = fs::read_to_string("dto_payloads/bet_modal_request.json").unwrap();
-        let _request: InteractionObject = serde_json::from_str(&contents).unwrap();
-    }
-
-    #[test]
     fn payout_request() {
         let contents = fs::read_to_string("dto_payloads/T30_payout_request.json").unwrap();
         let _request: InteractionObject = serde_json::from_str(&contents).unwrap();

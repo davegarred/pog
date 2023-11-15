@@ -24,6 +24,7 @@ mod response;
 mod verify;
 mod wager;
 mod wager_repository;
+mod interactions;
 
 pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Chargers outright";
 

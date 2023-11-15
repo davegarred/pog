@@ -3,13 +3,10 @@ use discord_api::interaction_request::{
     MessageComponentInteractionData, ModalSubmitInteractionData, User,
 };
 use discord_api::interaction_response::InteractionResponse;
-use discord_api::InteractionError;
 
 use crate::discord_client::DiscordClient;
-use crate::discord_id::{combine_user_payload, split_combined_user_payload, DiscordId};
 use crate::error::Error;
-use crate::response::{open_buy_modal, open_select_wager_for_close_choices};
-use crate::wager::{Wager, WagerStatus};
+use crate::interactions::{add_wager, initiate_bet, list_bets, pay_bet, settle_bet};
 use crate::wager_repository::WagerRepository;
 
 #[derive(Debug, Clone)]
@@ -56,9 +53,9 @@ where
         user: &User,
     ) -> Result<InteractionResponse, Error> {
         match data.name.as_str() {
-            pog_common::ADD_BET_COMMAND => self.initiate_bet(data),
-            pog_common::LIST_BET_COMMAND => self.list_bets(data).await,
-            pog_common::SETTLE_BET_COMMAND => self.pay_bet(data, user).await,
+            pog_common::ADD_BET_COMMAND => initiate_bet(data),
+            pog_common::LIST_BET_COMMAND => list_bets(data, &self.repo).await,
+            pog_common::SETTLE_BET_COMMAND => pay_bet(data, user, &self.repo).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
                 data.name
@@ -72,44 +69,9 @@ where
         request: InteractionObject,
     ) -> Result<InteractionResponse, Error> {
         match data.custom_id.as_str() {
-            "settle" => {}
-            &_ => return Err("unknown component custom id".into()),
+            "settle" => settle_bet(data, request, &self.repo, &self.client).await,
+            &_ => Err("unknown component custom id".into()),
         }
-        let wager_id = match data.values.get(0) {
-            Some(wager_id) => wager_id,
-            None => return Err("missing response to bet closing reason selection".into()),
-        };
-        let wager_id = match wager_id.parse::<i32>() {
-            Ok(wager_id) => wager_id,
-            Err(_) => {
-                return Err("unable to parse a wager_id from the returned value".into());
-            }
-        };
-        let mut wager = match self.repo.get(wager_id).await {
-            Some(wager) => wager,
-            None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
-        };
-        if wager.status != WagerStatus::Open {
-            return Err(Error::Invalid(format!("wager {} is not open", wager_id)));
-        }
-        wager.status = WagerStatus::Paid;
-
-        let message_id = request
-            .message
-            .ok_or::<InteractionError>("no message in request".into())?
-            .id
-            .clone();
-        let token = request.token;
-        if let Err(Error::ClientFailure(msg)) =
-            self.client.delete_message(&message_id, &token).await
-        {
-            println!("ERROR sending SNS: {}", msg);
-        }
-
-        self.repo.update_status(wager_id, &wager).await?;
-        let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
-
-        Ok(message.into())
     }
 
     pub async fn modal_response_handler(
@@ -117,114 +79,11 @@ where
         data: ModalSubmitInteractionData,
         user: &User,
     ) -> Result<InteractionResponse, Error> {
-        let offering = match &user.global_name {
-            None => user.username.to_string(),
-            Some(global_name) => global_name.to_string(),
-        };
-        let resolved_offering_user = DiscordId::from_raw_str(&user.id);
-        let (accepting, resolved_accepting_user) = split_combined_user_payload(&data.custom_id);
-
-        let components = data.collect_components()?;
-        let (wager, outcome) = match (components.get("wager"), components.get("outcome")) {
-            (Some(wager), Some(outcome)) => (wager.to_string(), outcome.to_string()),
-            (_, _) => return Err("missing components needed to place wager".into()),
-        };
-        let time = chrono::Utc::now().to_rfc3339();
-        let wager = Wager {
-            wager_id: 0,
-            time,
-            offering,
-            resolved_offering_user,
-            accepting,
-            resolved_accepting_user,
-            wager,
-            outcome,
-            status: WagerStatus::Open,
-        };
-
-        let response_message = wager.to_resolved_string();
-        self.repo.insert(wager).await?;
-        Ok(response_message.into())
-    }
-
-    pub fn initiate_bet(
-        &self,
-        data: ApplicationCommandInteractionData,
-    ) -> Result<InteractionResponse, Error> {
-        let option = match data.options.get(0) {
-            Some(option) => option,
-            None => return Err("bet command sent with empty options".into()),
-        };
-
-        let accepting = option.value.to_string();
-        let accepting_user_payload: String = match DiscordId::attempt_from_str(&accepting) {
-            Some(id) => {
-                let resolved_data = data
-                    .resolved
-                    .ok_or::<InteractionError>("missing resolved data".into())?;
-                let user = resolved_data.expect_user(&id.str_value())?;
-                let user_name = match &user.global_name {
-                    None => &user.username,
-                    Some(global_name) => global_name,
-                };
-                combine_user_payload(user_name, Some(id))
-            }
-            None => accepting,
-        };
-        Ok(open_buy_modal(accepting_user_payload))
-    }
-
-    pub async fn list_bets(
-        &self,
-        data: ApplicationCommandInteractionData,
-    ) -> Result<InteractionResponse, Error> {
-        let option = match data.options.get(0) {
-            Some(option) => option,
-            None => return Err("bet command sent with empty options".into()),
-        };
-
-        let user_id = match DiscordId::attempt_from_str(&option.value) {
-            Some(id) => id,
-            None => return Err(Error::UnresolvedDiscordUser),
-        };
-        let resolved_data = data
-            .resolved
-            .ok_or::<InteractionError>("missing resolved data".into())?;
-        let username = resolved_data.expect_user(&user_id.str_value())?;
-        let wagers = match DiscordId::attempt_from_str(&option.value) {
-            Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
-            None => vec![],
-        };
-        if wagers.is_empty() {
-            let message = format!("{} has no outstanding wagers", username.username);
-            return Ok(message.as_str().into());
-        }
-        let mut message = format!(
-            "{} has {} outstanding wagers:",
-            username.username,
-            wagers.len()
-        );
-        for wager in wagers {
-            message.push_str(format!("\n- {}", wager).as_str());
-        }
-        Ok(message.into())
-    }
-
-    pub async fn pay_bet(
-        &self,
-        _data: ApplicationCommandInteractionData,
-        user: &User,
-    ) -> Result<InteractionResponse, Error> {
-        let wagers = match DiscordId::from_raw_str(&user.id) {
-            Some(user_id) => self.repo.search_by_user_id(&user_id).await?,
-            None => vec![],
-        };
-        if wagers.is_empty() {
-            Ok("You have no open bets".into())
-        } else {
-            Ok(open_select_wager_for_close_choices(wagers))
+        match &data.custom_id {
+            &_ => add_wager(data, user, &self.repo).await,
         }
     }
+
 }
 
 #[cfg(test)]
@@ -254,7 +113,7 @@ mod test {
 
     #[tokio::test]
     async fn initialize_bet_request() {
-        let request = expect_request_from("dto_payloads/initialize_bet_request.json");
+        let request = expect_request_from("dto_payloads/T10_initialize_bet_request.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             TestDiscordClient::default(),
@@ -270,7 +129,7 @@ mod test {
 
     #[tokio::test]
     async fn modal_response() {
-        let request = expect_request_from("dto_payloads/bet_modal_request.json");
+        let request = expect_request_from("dto_payloads/T11_bet_modal_request.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             TestDiscordClient::default(),
