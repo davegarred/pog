@@ -1,11 +1,17 @@
-
-# expects POG_BUCKET to be set to the S3 bucket/folder containing the binaries 
+# This Makefile targets Ubuntu, different builds may require steps other than those in the 'prepare' stage
+#
+# 'deploy' expects POG_BUCKET to be set to the S3 bucket/folder containing the binaries
 # example: export POG_BUCKET=my-s3-bucket/pog/production
 
 .PHONY: clean
 clean: 
 	rm bootstrap*
 	cargo clean
+
+.PHONY: prepare
+prepare:
+	rustup target add  x86_64-unknown-linux-musl
+	sudo apt install musl-tools
 
 build:
 	cargo build --target x86_64-unknown-linux-musl --release --bin pog

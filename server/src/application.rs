@@ -71,6 +71,10 @@ where
         data: MessageComponentInteractionData,
         request: InteractionObject,
     ) -> Result<InteractionResponse, Error> {
+        match data.custom_id.as_str() {
+            "settle" => {}
+            &_ => return Err("unknown component custom id".into()),
+        }
         let wager_id = match data.values.get(0) {
             Some(wager_id) => wager_id,
             None => return Err("missing response to bet closing reason selection".into()),
@@ -104,6 +108,7 @@ where
 
         self.repo.update_status(wager_id, &wager).await?;
         let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
+
         Ok(message.into())
     }
 
@@ -347,7 +352,7 @@ mod test {
             .unwrap();
         let app = Application::new(repository, TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"bet","options":[{"label":"1","value":"1","description":"Harx vs Woody, wager: $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}],"flags":64}}"#;
+        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"settle","options":[{"label":"1","value":"1","description":"Harx vs Woody, wager: $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}],"flags":64}}"#;
         assert_response(result, expected);
     }
 
