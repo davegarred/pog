@@ -1,5 +1,6 @@
 use async_trait::async_trait;
-use aws_sdk_sns::Client;
+use aws_sdk_lambda::primitives::Blob;
+use aws_sdk_lambda::types::InvocationType;
 use pog_common::{Authorization, DeleteMessage, DiscordMessage};
 
 use crate::discord_client::DiscordClient;
@@ -8,14 +9,18 @@ use crate::error::Error;
 #[derive(Debug, Clone)]
 pub struct DefaultDiscordClient {
     authorization: Authorization,
-    client: Client,
-    sns_topic: String,
+    client: aws_sdk_lambda::Client,
+    client_function_name: String,
 }
 
 impl DefaultDiscordClient {
-    pub async fn new(application_id: String, application_token: String, sns_topic: String) -> Self {
+    pub async fn new(
+        application_id: String,
+        application_token: String,
+        client_function_name: String,
+    ) -> Self {
         let config = aws_config::load_from_env().await;
-        let client = aws_sdk_sns::Client::new(&config);
+        let client = aws_sdk_lambda::Client::new(&config);
         let authorization = Authorization {
             application_id,
             application_token,
@@ -23,7 +28,7 @@ impl DefaultDiscordClient {
         Self {
             authorization,
             client,
-            sns_topic,
+            client_function_name,
         }
     }
 }
@@ -37,12 +42,13 @@ impl DiscordClient for DefaultDiscordClient {
             request_token: request_token.to_string(),
         };
         let message = DiscordMessage::Delete(delete);
-        let payload = serde_json::to_string(&message).unwrap();
+        let payload = serde_json::to_vec(&message).unwrap();
         match self
             .client
-            .publish()
-            .topic_arn(&self.sns_topic)
-            .set_message(Some(payload))
+            .invoke()
+            .function_name(&self.client_function_name)
+            .set_invocation_type(Some(InvocationType::Event))
+            .payload(Blob::new(payload.as_slice()))
             .send()
             .await
         {

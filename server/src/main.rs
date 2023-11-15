@@ -40,13 +40,13 @@ async fn main() -> Result<(), Error> {
         std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
     let db_name = std::env::var("DB_NAME").expect("finding db name from environment");
     let db_host = std::env::var("DB_HOST").expect("finding db host from environment");
-    let sns_topic = std::env::var("SNS_TOPIC").expect("finding sns topic");
+    let client_lambda = std::env::var("CLIENT_LAMBDA").expect("finding client lambda name");
     let db_connection = format!(
         "postgresql://{}:{}@{}:5432/{}",
         db_user, db_pass, db_host, db_name
     );
     let repo = PostgresWagerRepo::new(&db_connection).await;
-    let client = DefaultDiscordClient::new(application_id, application_token, sns_topic).await;
+    let client = DefaultDiscordClient::new(application_id, application_token, client_lambda).await;
     let application = Application::new(repo, client);
     let state = AppState {
         verifier: VerifyTool::new(&public_key),

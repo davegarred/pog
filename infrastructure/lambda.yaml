@@ -1,4 +1,4 @@
-Description: Deploys the Lambdas and SNS topic for pog
+Description: Deploys the Lambdas for pog
 
 Parameters:
   Vpc:
@@ -67,8 +67,9 @@ Resources:
                 Resource: arn:aws:logs:*:*:*
               - Effect: Allow
                 Action:
-                  - sns:Publish
-                Resource: arn:aws:sns:*:*:*
+                  - lambda:InvokeAsync
+                  - lambda:InvokeFunction
+                Resource: arn:aws:lambda:*:*:*
               - Effect: Allow
                 Action:
                   - ec2:CreateNetworkInterface
@@ -118,7 +119,7 @@ Resources:
   ClientLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Join [ '-', [ !Ref "AWS::StackName", "pog-client" ] ]
+      FunctionName: !Join [ '-', [ !Ref "AWS::StackName", "client" ] ]
       Runtime: provided.al2
       Code:
         S3Bucket: !Ref S3Bucket
@@ -129,7 +130,6 @@ Resources:
       Role: !GetAtt ClientLambdaRole.Arn
       Environment:
         Variables:
-          SNS_TOPIC: !Ref PogSnsTopic
           DISCORD_APPLICATION_ID: !Ref DiscordApplicationId
           DISCORD_TOKEN: !Ref DiscordApplicationToken
   ClientFunctionPermission:
@@ -137,18 +137,12 @@ Resources:
     Properties:
       FunctionName: !Ref ClientLambda
       Action: lambda:InvokeFunction
-      Principal: sns.amazonaws.com
-  ClientFunctionSnsSubscription:
-    Type: AWS::SNS::Subscription
-    Properties:
-      Endpoint: !GetAtt ClientLambda.Arn
-      Protocol: lambda
-      TopicArn: !Ref PogSnsTopic
+      Principal: lambda.amazonaws.com
 
   ServerLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Join [ '-', [ !Ref "AWS::StackName", "pog-server" ] ]
+      FunctionName: !Join [ '-', [ !Ref "AWS::StackName", "server" ] ]
       Runtime: provided.al2
       Code:
         S3Bucket: !Ref S3Bucket
@@ -165,7 +159,7 @@ Resources:
         Variables:
           DB_HOST: !Ref DbHost
           DB_NAME: !Ref DbName
-          SNS_TOPIC: !Ref PogSnsTopic
+          CLIENT_LAMBDA: !Ref ClientLambda
           DISCORD_APPLICATION_ID: !Ref DiscordApplicationId
           DISCORD_PUBLIC_KEY: !Ref DiscordPublicKey
           DB_USER: !Ref DbUserName
@@ -184,10 +178,6 @@ Resources:
       AuthType: NONE
       InvokeMode: BUFFERED
       TargetFunctionArn: !Ref ServerLambda
-  PogSnsTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: !Join [ '-', [ !Ref "AWS::StackName", "sns-topic" ] ]
 
 Outputs:
   ServerFunctionUrl:
