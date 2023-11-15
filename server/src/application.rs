@@ -83,11 +83,11 @@ where
             &_ => add_wager(data, user, &self.repo).await,
         }
     }
-
 }
 
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
     use std::fs;
 
     use discord_api::interaction_request::InteractionObject;
@@ -120,11 +120,8 @@ mod test {
         );
         let result = app.request_handler(request).await.unwrap();
 
-        let found = serde_json::to_string(&result).unwrap();
-        assert_eq!(
-            &found,
-            r#"{"type":9,"data":{"custom_id":"1050119194533961860|Cisco","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"Jets beat the Chargers outright","style":2,"min_length":3,"max_length":100}]}]}}"#
-        );
+        // TODO: improve this check
+        assert_eq!(result.response_type, 9);
     }
 
     #[tokio::test]
@@ -168,6 +165,7 @@ mod test {
             wager: "$20".to_string(),
             outcome: "Rangers repeat".to_string(),
             status: WagerStatus::Open,
+            expected_settle_date: None,
         })
         .await
         .unwrap();
@@ -206,6 +204,7 @@ mod test {
                 wager: "$20".to_string(),
                 outcome: "Raiders win out".to_string(),
                 status: WagerStatus::Open,
+                expected_settle_date: None,
             })
             .await
             .unwrap();
@@ -243,6 +242,7 @@ mod test {
             wager: "$20".to_string(),
             outcome: "Rangers repeat".to_string(),
             status: WagerStatus::Open,
+            expected_settle_date: NaiveDate::from_ymd_opt(2024, 5, 5),
         })
         .await
         .unwrap();

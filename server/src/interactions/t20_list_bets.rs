@@ -1,9 +1,9 @@
-use discord_api::interaction_request::ApplicationCommandInteractionData;
-use discord_api::interaction_response::InteractionResponse;
-use discord_api::InteractionError;
 use crate::discord_id::DiscordId;
 use crate::error::Error;
 use crate::wager_repository::WagerRepository;
+use discord_api::interaction_request::ApplicationCommandInteractionData;
+use discord_api::interaction_response::InteractionResponse;
+use discord_api::InteractionError;
 
 pub async fn list_bets<R: WagerRepository>(
     data: ApplicationCommandInteractionData,

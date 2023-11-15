@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use std::fmt::{Display, Formatter};
 
 use crate::discord_id::DiscordId;
@@ -13,14 +14,19 @@ pub struct Wager {
     pub wager: String,
     pub outcome: String,
     pub status: WagerStatus,
+    pub expected_settle_date: Option<NaiveDate>,
 }
 
 impl Display for Wager {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let close = match (self.expected_settle_date, self.status) {
+            (Some(date), WagerStatus::Open) => format!(" (settles: {})", date.format("%b %e")),
+            _ => "".to_string(),
+        };
         write!(
             f,
-            "{} vs {}, wager: {} - {}",
-            self.offering, self.accepting, self.wager, self.outcome
+            "{} vs {}, wager: {} - {}{}",
+            self.offering, self.accepting, self.wager, self.outcome, close
         )
     }
 }
@@ -77,4 +83,64 @@ fn test_wager_status() {
         let i16_value = case.as_i16();
         assert_eq!(case, WagerStatus::from_i16(i16_value));
     }
+}
+
+#[test]
+fn test_format() {
+    let wager = Wager {
+        wager_id: 109,
+        time: "".to_string(),
+        offering: "Harx".to_string(),
+        resolved_offering_user: Some(1234567890.into()),
+        accepting: "Woody".to_string(),
+        resolved_accepting_user: None,
+        wager: "$20".to_string(),
+        outcome: "Cowboys over the Raiders".to_string(),
+        status: WagerStatus::Open,
+        expected_settle_date: NaiveDate::from_ymd_opt(2024, 5, 5),
+    };
+    assert_eq!(
+        wager.to_string(),
+        "Harx vs Woody, wager: $20 - Cowboys over the Raiders (settles: May  5)"
+    );
+}
+
+#[test]
+fn test_format_no_expected_settlement_date() {
+    let wager = Wager {
+        wager_id: 109,
+        time: "".to_string(),
+        offering: "Harx".to_string(),
+        resolved_offering_user: Some(1234567890.into()),
+        accepting: "Woody".to_string(),
+        resolved_accepting_user: None,
+        wager: "$20".to_string(),
+        outcome: "Cowboys over the Raiders".to_string(),
+        status: WagerStatus::Open,
+        expected_settle_date: None,
+    };
+    assert_eq!(
+        wager.to_string(),
+        "Harx vs Woody, wager: $20 - Cowboys over the Raiders"
+    );
+}
+
+#[test]
+fn test_format_paid() {
+    let wager = Wager {
+        wager_id: 109,
+        time: "".to_string(),
+        offering: "Harx".to_string(),
+        resolved_offering_user: Some(1234567890.into()),
+        accepting: "Woody".to_string(),
+        resolved_accepting_user: None,
+        wager: "$20".to_string(),
+        outcome: "Cowboys over the Raiders".to_string(),
+        status: WagerStatus::Paid,
+        expected_settle_date: NaiveDate::from_ymd_opt(2024, 5, 5),
+    };
+    assert_eq!(
+        wager.to_string(),
+        "Harx vs Woody, wager: $20 - Cowboys over the Raiders"
+    );
 }

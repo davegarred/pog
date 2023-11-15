@@ -14,11 +14,11 @@ pub enum InteractionCallbackData {
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct MessageCallbackData {
     #[serde(skip_serializing_if = "Option::is_none")]
-    content: Option<String>,
+    pub content: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    components: Vec<Component>,
+    pub components: Vec<Component>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    flags: Option<u32>,
+    pub flags: Option<u32>,
 }
 
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-autocomplete
@@ -29,11 +29,11 @@ pub struct AutocompleteCallbackData {}
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct ModalCallbackData {
     #[serde(skip_serializing_if = "Option::is_none")]
-    custom_id: Option<String>,
+    pub custom_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    title: Option<String>,
+    pub title: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    components: Vec<Component>,
+    pub components: Vec<Component>,
 }
 
 impl InteractionCallbackData {

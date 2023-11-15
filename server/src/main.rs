@@ -19,12 +19,12 @@ mod default_discord_client;
 mod discord_client;
 mod discord_id;
 mod error;
+mod interactions;
 mod postgres_repository;
 mod response;
 mod verify;
 mod wager;
 mod wager_repository;
-mod interactions;
 
 pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Chargers outright";
 

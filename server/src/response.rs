@@ -1,6 +1,3 @@
-
-
-
 // pub fn open_select_closing_reason_choices() -> DiscordResponse {
 //     let options = vec![
 //         SelectMenuOption {
@@ -42,5 +39,4 @@ mod test {
             r#"{"type":4,"data":{"content":"this is a simple message"}}"#
         )
     }
-
 }

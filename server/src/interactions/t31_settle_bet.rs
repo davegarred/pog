@@ -1,10 +1,10 @@
+use crate::discord_client::DiscordClient;
+use crate::error::Error;
+use crate::wager::WagerStatus;
+use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::{InteractionObject, MessageComponentInteractionData};
 use discord_api::interaction_response::InteractionResponse;
 use discord_api::InteractionError;
-use crate::discord_client::DiscordClient;
-use crate::wager::WagerStatus;
-use crate::error::Error;
-use crate::wager_repository::WagerRepository;
 
 pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
     data: MessageComponentInteractionData,
@@ -37,9 +37,7 @@ pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
         .id
         .clone();
     let token = request.token;
-    if let Err(Error::ClientFailure(msg)) =
-        client.delete_message(&message_id, &token).await
-    {
+    if let Err(Error::ClientFailure(msg)) = client.delete_message(&message_id, &token).await {
         println!("ERROR sending SNS: {}", msg);
     }
 

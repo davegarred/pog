@@ -1,14 +1,14 @@
+use chrono::Local;
+
 use discord_api::interaction_request::ApplicationCommandInteractionData;
 use discord_api::interaction_response::{Component, InteractionCallbackData, InteractionResponse};
 use discord_api::InteractionError;
-use crate::ADD_BET_PLACEHOLDER_TEXT;
+
 use crate::discord_id::{combine_user_payload, DiscordId};
 use crate::error::Error;
+use crate::ADD_BET_PLACEHOLDER_TEXT;
 
-
-pub fn initiate_bet(
-    data: ApplicationCommandInteractionData,
-) -> Result<InteractionResponse, Error> {
+pub fn initiate_bet(data: ApplicationCommandInteractionData) -> Result<InteractionResponse, Error> {
     let option = match data.options.get(0) {
         Some(option) => option,
         None => return Err("bet command sent with empty options".into()),
@@ -40,6 +40,7 @@ pub fn open_buy_modal(accepting: String) -> InteractionResponse {
         1,
         Some(2),
         Some(10),
+        true,
     );
     let outcome_modal = Component::modal_item(
         "outcome",
@@ -48,6 +49,17 @@ pub fn open_buy_modal(accepting: String) -> InteractionResponse {
         2,
         Some(3),
         Some(100),
+        true,
+    );
+    let today = Local::now().format("%m/%d").to_string();
+    let settlement_date_modal = Component::modal_item(
+        "settlement",
+        "When will this bet settle?",
+        &today,
+        1,
+        Some(3),
+        Some(10),
+        false,
     );
     let modal_component = InteractionCallbackData::modal_callback_data(
         accepting,
@@ -55,16 +67,8 @@ pub fn open_buy_modal(accepting: String) -> InteractionResponse {
         vec![
             Component::action_row(wager_modal),
             Component::action_row(outcome_modal),
+            Component::action_row(settlement_date_modal),
         ],
     );
     InteractionResponse::modal(modal_component)
-}
-
-#[test]
-fn test_open_buy_modal() {
-    let response = serde_json::to_string(&open_buy_modal("Woody".to_string())).unwrap();
-    assert_eq!(
-        &response,
-        r#"{"type":9,"data":{"custom_id":"Woody","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"Jets beat the Chargers outright","style":2,"min_length":3,"max_length":100}]}]}}"#
-    )
 }

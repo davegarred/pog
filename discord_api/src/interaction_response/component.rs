@@ -15,40 +15,42 @@ pub enum Component {
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct ActionRowComponent {
     #[serde(rename = "type")]
-    response_type: u8,
-    components: Vec<Component>,
+    pub response_type: u8,
+    pub components: Vec<Component>,
 }
 
 // https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct SelectMenuComponent {
     #[serde(rename = "type")]
-    response_type: u8,
-    custom_id: String,
-    options: Vec<SelectMenuOption>,
-    placeholder: Option<String>,
+    pub response_type: u8,
+    pub custom_id: String,
+    pub options: Vec<SelectMenuOption>,
+    pub placeholder: Option<String>,
 }
 
 // https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct SelectOptionComponent {
-    label: String,
-    value: String,
-    description: String,
+    pub label: String,
+    pub value: String,
+    pub description: String,
 }
 // https://discord.com/developers/docs/interactions/message-components#text-input-object-text-input-structure
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct TextInputComponent {
     #[serde(rename = "type")]
-    response_type: u8,
-    custom_id: String,
-    label: String,
-    placeholder: Option<String>,
-    style: u8,
+    pub response_type: u8,
+    pub custom_id: String,
+    pub label: String,
+    pub placeholder: Option<String>,
+    pub style: u8,
     #[serde(skip_serializing_if = "Option::is_none")]
-    min_length: Option<u16>,
+    pub min_length: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    max_length: Option<u16>,
+    pub max_length: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required: Option<bool>,
 }
 
 impl Component {
@@ -65,6 +67,7 @@ impl Component {
         style: u8,
         min_length: Option<u16>,
         max_length: Option<u16>,
+        required: bool,
     ) -> Self {
         let placeholder = Some(placeholder.to_string());
         Self::TextInput(TextInputComponent {
@@ -75,6 +78,7 @@ impl Component {
             style,
             min_length,
             max_length,
+            required: Some(required),
         })
     }
 

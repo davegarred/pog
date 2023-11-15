@@ -97,6 +97,7 @@ async fn test_in_mem_wager_repo() {
         wager: "$100".to_string(),
         outcome: "Rangers take the Phillies, should they meet".to_string(),
         status: WagerStatus::Open,
+        expected_settle_date: None,
     })
     .await
     .unwrap();
@@ -110,6 +111,7 @@ async fn test_in_mem_wager_repo() {
         wager: "$40".to_string(),
         outcome: "Jax has a losing season".to_string(),
         status: WagerStatus::Open,
+        expected_settle_date: None,
     })
     .await
     .unwrap();
@@ -123,6 +125,7 @@ async fn test_in_mem_wager_repo() {
         wager: "$30".to_string(),
         outcome: "Jets beat the Oilers".to_string(),
         status: WagerStatus::Open,
+        expected_settle_date: None,
     })
     .await
     .unwrap();
@@ -136,6 +139,7 @@ async fn test_in_mem_wager_repo() {
         wager: "$30".to_string(),
         outcome: "Something that already happened".to_string(),
         status: WagerStatus::Paid,
+        expected_settle_date: None,
     })
     .await
     .unwrap();

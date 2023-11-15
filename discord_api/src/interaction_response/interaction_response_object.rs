@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct InteractionResponse {
     #[serde(rename = "type")]
-    response_type: u8,
+    pub response_type: u8,
     #[serde(skip_serializing_if = "Option::is_none")]
-    data: Option<InteractionCallbackData>,
+    pub data: Option<InteractionCallbackData>,
 }
 
 impl InteractionResponse {

@@ -1,9 +1,9 @@
-use discord_api::interaction_request::{ApplicationCommandInteractionData, User};
-use discord_api::interaction_response::{Component, InteractionResponse, SelectMenuOption};
 use crate::discord_id::DiscordId;
-use crate::wager_repository::WagerRepository;
 use crate::error::Error;
 use crate::wager::Wager;
+use crate::wager_repository::WagerRepository;
+use discord_api::interaction_request::{ApplicationCommandInteractionData, User};
+use discord_api::interaction_response::{Component, InteractionResponse, SelectMenuOption};
 
 pub async fn pay_bet<R: WagerRepository>(
     _data: ApplicationCommandInteractionData,

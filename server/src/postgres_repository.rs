@@ -1,13 +1,14 @@
-use crate::discord_id::DiscordId;
-use crate::error::Error;
-use crate::wager::{Wager, WagerStatus};
-use crate::wager_repository::WagerRepository;
 use futures::TryStreamExt;
 use sqlx::postgres::{PgPoolOptions, PgRow};
 use sqlx::{Pool, Postgres, Row, Transaction};
 
-const INSERT_WAGER: &str = r#"INSERT INTO wagers(wager_id,time,offering,resolved_offering_user,accepting,resolved_accepting_user,wager,outcome,status)
-        VALUES (nextval('seq_wager_id'), $1, $2, $3, $4, $5, $6, $7, $8)"#;
+use crate::discord_id::DiscordId;
+use crate::error::Error;
+use crate::wager::{Wager, WagerStatus};
+use crate::wager_repository::WagerRepository;
+
+const INSERT_WAGER: &str = r#"INSERT INTO wagers(wager_id,time,offering,resolved_offering_user,accepting,resolved_accepting_user,wager,outcome,status,expected_settle_date)
+        VALUES (nextval('seq_wager_id'), $1, $2, $3, $4, $5, $6, $7, $8, $9)"#;
 const SELECT_BY_ID: &str = "SELECT * FROM wagers WHERE wager_id= $1";
 const SELECT_BY_USER: &str =
     "SELECT * FROM wagers WHERE (offering= $1 OR accepting= $2) AND status=0";
@@ -46,6 +47,7 @@ impl WagerRepository for PostgresWagerRepo {
             .bind(wager.wager)
             .bind(wager.outcome)
             .bind(wager.status.as_i16())
+            .bind(wager.expected_settle_date.map(|s| s.to_string()))
             .execute(&mut *tx)
             .await?;
         tx.commit().await?;
@@ -115,6 +117,8 @@ fn row_to_wager(row: PgRow) -> Wager {
     let wager: String = row.get("wager");
     let outcome: String = row.get("outcome");
     let status: i16 = row.get("status");
+    let expected_settle_date_str: Option<String> = row.get("expected_settle_date");
+    let expected_settle_date = expected_settle_date_str.map(|s| s.parse().unwrap());
     Wager {
         wager_id: wager_id as u32,
         time,
@@ -125,69 +129,83 @@ fn row_to_wager(row: PgRow) -> Wager {
         wager,
         outcome,
         status: WagerStatus::from_i16(status),
+        expected_settle_date,
     }
 }
 
-#[tokio::test]
-async fn test_repo() {
-    let repo =
-        PostgresWagerRepo::new("postgresql://pog_user:pog_pass@127.0.0.1:5432/pog_server").await;
-    let user_a = uuid::Uuid::new_v4().to_string();
-    let user_b = uuid::Uuid::new_v4().to_string();
-    let user_c = uuid::Uuid::new_v4().to_string();
-    let time = chrono::Utc::now().to_rfc3339();
-    repo.insert(Wager {
-        wager_id: 0,
-        time: time.to_string(),
-        offering: user_a.to_string(),
-        resolved_offering_user: None,
-        accepting: user_b.to_string(),
-        resolved_accepting_user: None,
-        wager: "$100".to_string(),
-        outcome: "Rangers take the Phillies, should they meet".to_string(),
-        status: WagerStatus::Open,
-    })
-    .await
-    .unwrap();
-    repo.insert(Wager {
-        wager_id: 0,
-        time: time.to_string(),
-        offering: user_c.to_string(),
-        resolved_offering_user: None,
-        accepting: user_a.to_string(),
-        resolved_accepting_user: None,
-        wager: "$40".to_string(),
-        outcome: "Jax has a losing season".to_string(),
-        status: WagerStatus::Open,
-    })
-    .await
-    .unwrap();
-    repo.insert(Wager {
-        wager_id: 0,
-        time: time.to_string(),
-        offering: user_b.to_string(),
-        resolved_offering_user: None,
-        accepting: user_c.to_string(),
-        resolved_accepting_user: None,
-        wager: "$30".to_string(),
-        outcome: "Jets beat the Oilers".to_string(),
-        status: WagerStatus::Open,
-    })
-    .await
-    .unwrap();
-    repo.insert(Wager {
-        wager_id: 0,
-        time: time.to_string(),
-        offering: user_b.to_string(),
-        resolved_offering_user: None,
-        accepting: user_c.to_string(),
-        resolved_accepting_user: None,
-        wager: "$30".to_string(),
-        outcome: "Something that already happened".to_string(),
-        status: WagerStatus::Paid,
-    })
-    .await
-    .unwrap();
-    let found = repo.search_by_user(&user_b).await.unwrap();
-    assert_eq!(2, found.len());
+#[cfg(test)]
+mod test {
+    use crate::postgres_repository::PostgresWagerRepo;
+    use crate::wager::{Wager, WagerStatus};
+    use crate::wager_repository::WagerRepository;
+    use chrono::NaiveDate;
+
+    #[tokio::test]
+    async fn repo() {
+        let repo =
+            PostgresWagerRepo::new("postgresql://pog_user:pog_pass@127.0.0.1:5432/pog_server")
+                .await;
+        let user_a = uuid::Uuid::new_v4().to_string();
+        let user_b = uuid::Uuid::new_v4().to_string();
+        let user_c = uuid::Uuid::new_v4().to_string();
+        let time = chrono::Utc::now().to_rfc3339();
+        repo.insert(Wager {
+            wager_id: 0,
+            time: time.to_string(),
+            offering: user_a.to_string(),
+            resolved_offering_user: None,
+            accepting: user_b.to_string(),
+            resolved_accepting_user: None,
+            wager: "$100".to_string(),
+            outcome: "Rangers take the Phillies, should they meet".to_string(),
+            status: WagerStatus::Open,
+            expected_settle_date: NaiveDate::from_ymd_opt(2024, 5, 5),
+        })
+        .await
+        .unwrap();
+        repo.insert(Wager {
+            wager_id: 0,
+            time: time.to_string(),
+            offering: user_c.to_string(),
+            resolved_offering_user: None,
+            accepting: user_a.to_string(),
+            resolved_accepting_user: None,
+            wager: "$40".to_string(),
+            outcome: "Jax has a losing season".to_string(),
+            status: WagerStatus::Open,
+            expected_settle_date: None,
+        })
+        .await
+        .unwrap();
+        repo.insert(Wager {
+            wager_id: 0,
+            time: time.to_string(),
+            offering: user_b.to_string(),
+            resolved_offering_user: None,
+            accepting: user_c.to_string(),
+            resolved_accepting_user: None,
+            wager: "$30".to_string(),
+            outcome: "Jets beat the Oilers".to_string(),
+            status: WagerStatus::Open,
+            expected_settle_date: None,
+        })
+        .await
+        .unwrap();
+        repo.insert(Wager {
+            wager_id: 0,
+            time: time.to_string(),
+            offering: user_b.to_string(),
+            resolved_offering_user: None,
+            accepting: user_c.to_string(),
+            resolved_accepting_user: None,
+            wager: "$30".to_string(),
+            outcome: "Something that already happened".to_string(),
+            status: WagerStatus::Paid,
+            expected_settle_date: None,
+        })
+        .await
+        .unwrap();
+        let found = repo.search_by_user(&user_b).await.unwrap();
+        assert_eq!(2, found.len());
+    }
 }

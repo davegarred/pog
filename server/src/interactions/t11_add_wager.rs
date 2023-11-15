@@ -1,9 +1,10 @@
-use discord_api::interaction_request::{ModalSubmitInteractionData, User};
-use discord_api::interaction_response::InteractionResponse;
-use crate::discord_id::{DiscordId, split_combined_user_payload};
+use crate::discord_id::{split_combined_user_payload, DiscordId};
 use crate::error::Error;
+use crate::interactions::parse_date::parse_date;
 use crate::wager::{Wager, WagerStatus};
 use crate::wager_repository::WagerRepository;
+use discord_api::interaction_request::{ModalSubmitInteractionData, User};
+use discord_api::interaction_response::InteractionResponse;
 
 pub async fn add_wager<R: WagerRepository>(
     data: ModalSubmitInteractionData,
@@ -23,6 +24,10 @@ pub async fn add_wager<R: WagerRepository>(
         (_, _) => return Err("missing components needed to place wager".into()),
     };
     let time = chrono::Utc::now().to_rfc3339();
+    let expected_settle_date = match components.get("settlement") {
+        Some(c) => parse_date(c),
+        None => None,
+    };
     let wager = Wager {
         wager_id: 0,
         time,
@@ -33,10 +38,10 @@ pub async fn add_wager<R: WagerRepository>(
         wager,
         outcome,
         status: WagerStatus::Open,
+        expected_settle_date,
     };
 
     let response_message = wager.to_resolved_string();
     repo.insert(wager).await?;
     Ok(response_message.into())
-
 }
