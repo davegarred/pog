@@ -18,12 +18,21 @@ impl InteractionResponse {
         }
     }
 
-    pub fn message_response(content: String) -> InteractionResponse {
+    pub fn simple_message(content: String) -> InteractionResponse {
         InteractionResponse {
             response_type: 4,
             data: Some(InteractionCallbackData::message_callback(
                 Some(content),
                 vec![],
+            )),
+        }
+    }
+    pub fn channel_message_with_source(content: String, components: Vec<Component>) -> InteractionResponse {
+        InteractionResponse {
+            response_type: 4,
+            data: Some(InteractionCallbackData::message_callback(
+                Some(content),
+                components,
             )),
         }
     }
@@ -48,12 +57,12 @@ impl InteractionResponse {
 
 impl From<&str> for InteractionResponse {
     fn from(value: &str) -> Self {
-        InteractionResponse::message_response(value.to_string())
+        InteractionResponse::simple_message(value.to_string())
     }
 }
 
 impl From<String> for InteractionResponse {
     fn from(value: String) -> Self {
-        InteractionResponse::message_response(value)
+        InteractionResponse::simple_message(value)
     }
 }

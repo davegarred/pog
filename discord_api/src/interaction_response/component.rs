@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[serde(untagged)]
 pub enum Component {
     ActionRow(ActionRowComponent),
+    Button(ButtonComponent),
     SelectMenu(SelectMenuComponent),
     SelectOption(SelectOptionComponent),
     TextInput(TextInputComponent),
@@ -17,6 +18,22 @@ pub struct ActionRowComponent {
     #[serde(rename = "type")]
     pub response_type: u8,
     pub components: Vec<Component>,
+}
+
+// https://discord.com/developers/docs/interactions/message-components#buttons
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+pub struct ButtonComponent {
+    #[serde(rename = "type")]
+    pub response_type: u8,
+    // TODO: https://discord.com/developers/docs/interactions/message-components#buttons
+    pub style: u8,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    pub disabled: bool,
 }
 
 // https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure
@@ -54,13 +71,37 @@ pub struct TextInputComponent {
 }
 
 impl Component {
-    pub fn action_row(modal: Component) -> Self {
+    pub fn action_row(modals: Vec<Component>) -> Self {
         Self::ActionRow(ActionRowComponent {
             response_type: 1,
-            components: vec![modal],
+            components: modals,
         })
     }
-    pub fn modal_item(
+    pub fn button(label: &str, custom_id: &str) -> Self {
+        Self::Button(ButtonComponent {
+            response_type: 2,
+            style: 1,
+            label: Some(label.to_string()),
+            custom_id: Some(custom_id.to_string()),
+            url: None,
+            disabled: false,
+        })
+    }
+
+    pub fn select_choice(
+        custom_id: &str,
+        placeholder: &str,
+        options: Vec<SelectMenuOption>,
+    ) -> Self {
+        Self::SelectMenu(SelectMenuComponent {
+            response_type: 3,
+            custom_id: custom_id.to_string(),
+            placeholder: Some(placeholder.to_string()),
+            options,
+        })
+    }
+
+    pub fn text_input(
         custom_id: &str,
         label: &str,
         placeholder: &str,
@@ -82,16 +123,4 @@ impl Component {
         })
     }
 
-    pub fn select_choice_component(
-        custom_id: &str,
-        placeholder: &str,
-        options: Vec<SelectMenuOption>,
-    ) -> Self {
-        Self::SelectMenu(SelectMenuComponent {
-            response_type: 3,
-            custom_id: custom_id.to_string(),
-            placeholder: Some(placeholder.to_string()),
-            options,
-        })
-    }
 }

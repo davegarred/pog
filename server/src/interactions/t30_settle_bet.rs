@@ -28,9 +28,9 @@ pub fn open_select_wager_for_close_choices(wagers: Vec<Wager>) -> InteractionRes
         let description = wager.to_string();
         options.push(SelectMenuOption::new(value.clone(), value, description));
     }
-    let close_bet = Component::select_choice_component("settle", "Close which bet?", options);
+    let close_bet = Component::select_choice("settle", "Close which bet?", options);
     InteractionResponse::select_response(
         "Close out a bet".to_string(),
-        vec![Component::action_row(close_bet)],
+        vec![Component::action_row(vec![close_bet])],
     )
 }

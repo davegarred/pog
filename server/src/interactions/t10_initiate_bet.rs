@@ -33,7 +33,7 @@ pub fn initiate_bet(data: ApplicationCommandInteractionData) -> Result<Interacti
 }
 
 pub fn open_buy_modal(accepting: String) -> InteractionResponse {
-    let wager_modal = Component::modal_item(
+    let wager_modal = Component::text_input(
         "wager",
         "How much are we wagering?",
         "$20",
@@ -42,7 +42,7 @@ pub fn open_buy_modal(accepting: String) -> InteractionResponse {
         Some(10),
         true,
     );
-    let outcome_modal = Component::modal_item(
+    let outcome_modal = Component::text_input(
         "outcome",
         "What is the bet on?",
         ADD_BET_PLACEHOLDER_TEXT,
@@ -52,7 +52,7 @@ pub fn open_buy_modal(accepting: String) -> InteractionResponse {
         true,
     );
     let today = Local::now().format("%m/%d").to_string();
-    let settlement_date_modal = Component::modal_item(
+    let settlement_date_modal = Component::text_input(
         "settlement",
         "When will this bet settle?",
         &today,
@@ -65,9 +65,9 @@ pub fn open_buy_modal(accepting: String) -> InteractionResponse {
         accepting,
         "Place a bet",
         vec![
-            Component::action_row(wager_modal),
-            Component::action_row(outcome_modal),
-            Component::action_row(settlement_date_modal),
+            Component::action_row(vec![wager_modal]),
+            Component::action_row(vec![outcome_modal]),
+            Component::action_row(vec![settlement_date_modal]),
         ],
     );
     InteractionResponse::modal(modal_component)
