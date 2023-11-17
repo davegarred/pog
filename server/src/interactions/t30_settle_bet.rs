@@ -15,7 +15,7 @@ pub async fn pay_bet<R: WagerRepository>(
         None => vec![],
     };
     if wagers.is_empty() {
-        Ok("You have no open bets".into())
+        Ok(InteractionResponse::channel_message_with_source_ephemeral("You have no open bets", vec![]))
     } else {
         Ok(open_select_wager_for_close_choices(wagers))
     }

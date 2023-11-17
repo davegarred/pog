@@ -25,7 +25,7 @@ pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
         None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
     };
 
-    let updated_status = match designator {
+    wager.status = match designator {
         Designation::Offering => WagerStatus::OfferingWon,
         Designation::Accepting => WagerStatus::AcceptingWon,
         Designation::NoBet => WagerStatus::NoBet,
@@ -44,7 +44,6 @@ pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
         WagerStatus::Open => return Err(Error::Invalid(format!("wager {} is still open", wager_id)))
     };
 
-    wager.status = updated_status;
     close_message(&request, client).await?;
     repo.update_status(wager_id, &wager).await?;
 
