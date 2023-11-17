@@ -5,7 +5,7 @@
     "flags": 0,
     "guild_id": "1150922826463846521",
     "id": "1165639175018651688",
-    "last_message_id": "1174848265519386736",
+    "last_message_id": "1174859581445374072",
     "name": "wagers",
     "nsfw": false,
     "parent_id": "1150922826463846522",
@@ -18,7 +18,7 @@
   "channel_id": "1165639175018651688",
   "data": {
     "component_type": 2,
-    "custom_id": "Get Y"
+    "custom_id": "accepting_109"
   },
   "entitlement_sku_ids": [],
   "entitlements": [],
@@ -29,7 +29,7 @@
   },
   "guild_id": "1150922826463846521",
   "guild_locale": "en-US",
-  "id": "1174848273182375997",
+  "id": "1174859602316234813",
   "locale": "en-US",
   "member": {
     "avatar": null,
@@ -73,50 +73,53 @@
       {
         "components": [
           {
-            "custom_id": "Do X",
-            "label": "button_x",
+            "custom_id": "offering_127",
+            "label": "You won",
             "style": 1,
             "type": 2
           },
           {
-            "custom_id": "Get Y",
-            "label": "button_y",
+            "custom_id": "accepting_127",
+            "label": "He won",
             "style": 1,
+            "type": 2
+          },
+          {
+            "custom_id": "nobet_127",
+            "label": "No bet",
+            "style": 1,
+            "type": 2
+          },
+          {
+            "custom_id": "cancel_127",
+            "label": "Cancel",
+            "style": 2,
             "type": 2
           }
         ],
         "type": 1
       }
     ],
-    "content": "my_response",
+    "content": "close",
     "edited_timestamp": null,
     "embeds": [],
     "flags": 0,
-    "id": "1174848265519386736",
-    "interaction": {
-      "id": "1174848261513810072",
-      "name": "test",
-      "type": 2,
-      "user": {
-        "avatar": "885a4f4855b4857e23d5b010dd4d3646",
-        "avatar_decoration_data": null,
-        "discriminator": "6401",
-        "global_name": "Harx",
-        "id": "695398918694895710",
-        "public_flags": 0,
-        "username": "Harx"
-      }
-    },
+    "id": "1174859581445374072",
     "mention_everyone": false,
     "mention_roles": [],
     "mentions": [],
+    "message_reference": {
+      "channel_id": "1165639175018651688",
+      "guild_id": "1150922826463846521",
+      "message_id": "1174859563959337011"
+    },
     "pinned": false,
-    "timestamp": "2023-11-16T23:07:34.125000+00:00",
+    "timestamp": "2023-11-16T23:52:32.052000+00:00",
     "tts": false,
-    "type": 20,
+    "type": 19,
     "webhook_id": "1166787343743725609"
   },
-  "token": "aW50ZXJhY3Rpb246MTE3NDg0ODI3MzE4MjM3NTk5NzpucFdrdXk4amh5dDVBamxWQjhmYjd0S3RxQ2RoMzJyNTBpYUhKY1ZBR0hHU1NXS1BSaE1nNTR5SU5oc2hmSDNmSWd5OUZwZnQ2VDlLbHdTdWxpNWp2ZVBqM3R6NnVBZWpaRnQwR0pwYXB6T3pOWmpTVE1wcGhHM2MxTnpmU1U5dg",
+  "token": "aW50ZXJhY3Rpb246MTE3NDg1OTYwMjMxNjIzNDgxMzp3Q0ROcVFZT2xFVW9SY3psNlBhZHp1c0lRYnp3bkVRS3QzTHREcjdMU0pMcHZqam1WZWJIbkpCWDJLS0VLbm9EMG1kMjRuWUlTSU1sNHZoWHY5Y2M1TWRwTkZnS3FIbVRpWmZWRG5oUmhFNHJTVmdMV2tJQ2ZQSUxoQWphajVsSw",
   "type": 3,
   "version": 1
 }

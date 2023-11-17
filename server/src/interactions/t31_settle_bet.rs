@@ -1,12 +1,12 @@
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
+use crate::interactions::t32_settle_bet::close_message;
 use crate::wager::WagerStatus;
 use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::{InteractionObject, MessageComponentInteractionData};
-use discord_api::interaction_response::InteractionResponse;
-use discord_api::InteractionError;
+use discord_api::interaction_response::{Component, InteractionResponse};
 
-pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
+pub async fn bet_selected<R: WagerRepository, C: DiscordClient>(
     data: MessageComponentInteractionData,
     request: InteractionObject,
     repo: &R,
@@ -22,27 +22,30 @@ pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
             return Err("unable to parse a wager_id from the returned value".into());
         }
     };
-    let mut wager = match repo.get(wager_id).await {
+    let wager = match repo.get(wager_id).await {
         Some(wager) => wager,
         None => return Err(Error::Invalid(format!("wager {} not found", wager_id))),
     };
     if wager.status != WagerStatus::Open {
         return Err(Error::Invalid(format!("wager {} is not open", wager_id)));
     }
-    wager.status = WagerStatus::Paid;
 
-    let message_id = request
-        .message
-        .ok_or::<InteractionError>("no message in request".into())?
-        .id
-        .clone();
-    let token = request.token;
-    if let Err(Error::ClientFailure(msg)) = client.delete_message(&message_id, &token).await {
-        println!("ERROR sending SNS: {}", msg);
-    }
+    close_message(&request, client).await?;
 
-    repo.update_status(wager_id, &wager).await?;
-    let message = format!("Bet closed as paid: {}", wager.to_resolved_string());
-
-    Ok(message.into())
+    let offering_won = format!("{} won", wager.offering);
+    let accepting_won = format!("{} won", wager.accepting);
+    let content = format!("Closing: {}", wager);
+    Ok(InteractionResponse::channel_message_with_source_ephemeral(
+        &content,
+        vec![Component::action_row(vec![
+            Component::button(&offering_won, 1, format!("offering_{}", wager_id).as_str()),
+            Component::button(
+                &accepting_won,
+                1,
+                format!("accepting_{}", wager_id).as_str(),
+            ),
+            Component::button("No bet", 1, format!("nobet_{}", wager_id).as_str()),
+            Component::button("Cancel", 2, format!("cancel_{}", wager_id).as_str()),
+        ])],
+    ))
 }

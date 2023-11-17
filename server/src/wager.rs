@@ -52,8 +52,9 @@ impl Wager {
 pub enum WagerStatus {
     Open = 0,
     Paid = 1,
-    Cancelled = 2,
-    NoBet = 3,
+    OfferingWon = 2,
+    AcceptingWon = 3,
+    NoBet = 4,
 }
 
 impl WagerStatus {
@@ -64,8 +65,9 @@ impl WagerStatus {
         match val {
             0 => WagerStatus::Open,
             1 => WagerStatus::Paid,
-            2 => WagerStatus::Cancelled,
-            3 => WagerStatus::NoBet,
+            2 => WagerStatus::OfferingWon,
+            3 => WagerStatus::AcceptingWon,
+            4 => WagerStatus::NoBet,
             v => panic!("attempt to convert {} to WagerStatus", v),
         }
     }
@@ -76,7 +78,8 @@ fn test_wager_status() {
     let test_cases: Vec<WagerStatus> = vec![
         WagerStatus::Open,
         WagerStatus::Paid,
-        WagerStatus::Cancelled,
+        WagerStatus::OfferingWon,
+        WagerStatus::AcceptingWon,
         WagerStatus::NoBet,
     ];
     for case in test_cases {

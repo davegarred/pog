@@ -6,7 +6,7 @@ use discord_api::interaction_response::InteractionResponse;
 
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
-use crate::interactions::{add_wager, initiate_bet, list_bets, pay_bet, settle_bet};
+use crate::interactions::{add_wager, bet_selected, initiate_bet, list_bets, pay_bet, settle_bet};
 use crate::wager_repository::WagerRepository;
 
 #[derive(Debug, Clone)]
@@ -68,8 +68,12 @@ where
         data: MessageComponentInteractionData,
         request: InteractionObject,
     ) -> Result<InteractionResponse, Error> {
-        match data.custom_id.as_str() {
-            "settle" => settle_bet(data, request, &self.repo, &self.client).await,
+        let ident: String = data.custom_id.chars().take(6).collect();
+        match ident.as_str() {
+            "offeri" | "accept" | "nobet_" | "cancel" => {
+                settle_bet(data, request, &self.repo, &self.client).await
+            }
+            "settle" => bet_selected(data, request, &self.repo, &self.client).await,
             &_ => Err("unknown component custom id".into()),
         }
     }
@@ -248,7 +252,49 @@ mod test {
         .unwrap();
         let app = Application::new(repo, client.clone());
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"Bet closed as paid: <@695398918694895710> vs Woody, wager: $20 - Rangers repeat"}}"#;
+        let expected = r#"{"type":4,"data":{"content":"Closing: ---- vs Woody, wager: $20 - Rangers repeat (settles: May  5)","components":[{"type":1,"components":[{"type":2,"style":1,"label":"---- won","custom_id":"offering_109","disabled":false},{"type":2,"style":1,"label":"Woody won","custom_id":"accepting_109","disabled":false},{"type":2,"style":1,"label":"No bet","custom_id":"nobet_109","disabled":false},{"type":2,"style":2,"label":"Cancel","custom_id":"cancel_109","disabled":false}]}],"flags":64}}"#;
+        assert_response(result, expected);
+        assert_eq!(None, get_client_message(&client))
+    }
+
+    #[tokio::test]
+    async fn t32_reason_selected_cancel() {
+        let request = expect_request_from("dto_payloads/T32a_reason_selected.json");
+        let repo = InMemWagerRepository::default();
+        let client = TestDiscordClient::default();
+        set_client_message(&client, Some("original message".to_string()));
+        let app = Application::new(repo, client.clone());
+        let result = app.request_handler(request).await.unwrap();
+        let expected = r#"{"type":4,"data":{"content":"No bets were settled"}}"#;
+        assert_response(result, expected);
+        assert_eq!(
+            Some("original message".to_string()),
+            get_client_message(&client)
+        )
+    }
+    #[tokio::test]
+    async fn t32_reason_selected() {
+        let request = expect_request_from("dto_payloads/T32_reason_selected.json");
+        let repo = InMemWagerRepository::default();
+        let client = TestDiscordClient::default();
+        set_client_message(&client, Some("original message".to_string()));
+        repo.insert(Wager {
+            wager_id: 109,
+            time: "".to_string(),
+            offering: "----".to_string(),
+            resolved_offering_user: Some(695398918694895710.into()),
+            accepting: "Woody".to_string(),
+            resolved_accepting_user: None,
+            wager: "$20".to_string(),
+            outcome: "Rangers repeat".to_string(),
+            status: WagerStatus::Open,
+            expected_settle_date: NaiveDate::from_ymd_opt(2024, 5, 5),
+        })
+        .await
+        .unwrap();
+        let app = Application::new(repo, client.clone());
+        let result = app.request_handler(request).await.unwrap();
+        let expected = r#"{"type":4,"data":{"content":"Woody won: <@695398918694895710> vs Woody, wager: $20 - Rangers repeat"}}"#;
         assert_response(result, expected);
         assert_eq!(None, get_client_message(&client))
     }

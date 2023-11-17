@@ -77,10 +77,10 @@ impl Component {
             components: modals,
         })
     }
-    pub fn button(label: &str, custom_id: &str) -> Self {
+    pub fn button(label: &str, style: u8, custom_id: &str) -> Self {
         Self::Button(ButtonComponent {
             response_type: 2,
-            style: 1,
+            style,
             label: Some(label.to_string()),
             custom_id: Some(custom_id.to_string()),
             url: None,
@@ -122,5 +122,4 @@ impl Component {
             required: Some(required),
         })
     }
-
 }

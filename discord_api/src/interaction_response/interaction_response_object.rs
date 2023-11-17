@@ -27,11 +27,26 @@ impl InteractionResponse {
             )),
         }
     }
-    pub fn channel_message_with_source(content: String, components: Vec<Component>) -> InteractionResponse {
+    pub fn channel_message_with_source(
+        content: &str,
+        components: Vec<Component>,
+    ) -> InteractionResponse {
         InteractionResponse {
             response_type: 4,
             data: Some(InteractionCallbackData::message_callback(
-                Some(content),
+                Some(content.to_string()),
+                components,
+            )),
+        }
+    }
+    pub fn channel_message_with_source_ephemeral(
+        content: &str,
+        components: Vec<Component>,
+    ) -> InteractionResponse {
+        InteractionResponse {
+            response_type: 4,
+            data: Some(InteractionCallbackData::ephemeral_message_callback(
+                Some(content.to_string()),
                 components,
             )),
         }
