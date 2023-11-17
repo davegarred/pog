@@ -152,7 +152,13 @@ mod test {
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
-        assert_eq!(result, InteractionResponse::channel_message_with_source_ephemeral("Harx has no outstanding wagers", vec![]));
+        assert_eq!(
+            result,
+            InteractionResponse::channel_message_with_source_ephemeral(
+                "Harx has no outstanding wagers",
+                vec![]
+            )
+        );
     }
 
     #[tokio::test]
@@ -175,7 +181,8 @@ mod test {
         .unwrap();
         let app = Application::new(repo, TestDiscordClient::default());
         let result = app.request_handler(request).await.unwrap();
-        let expected = "Harx has 1 outstanding wagers:\n- ---- vs Woody, wager: $20 - Rangers repeat";
+        let expected =
+            "Harx has 1 outstanding wagers:\n- ---- vs Woody, wager: $20 - Rangers repeat";
         assert_eq!(
             result,
             InteractionResponse::channel_message_with_source_ephemeral(expected, vec![])
@@ -191,7 +198,13 @@ mod test {
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
-        assert_eq!(result, InteractionResponse::channel_message_with_source_ephemeral("johnanon has no outstanding wagers", vec![]));
+        assert_eq!(
+            result,
+            InteractionResponse::channel_message_with_source_ephemeral(
+                "johnanon has no outstanding wagers",
+                vec![]
+            )
+        );
     }
 
     #[tokio::test]
@@ -273,7 +286,9 @@ mod test {
             outcome: "Rangers repeat".to_string(),
             status: WagerStatus::Open,
             expected_settle_date: NaiveDate::from_ymd_opt(2024, 5, 5),
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
         let client = TestDiscordClient::default();
         set_client_message(&client, Some("original message".to_string()));
         let app = Application::new(repo, client.clone());

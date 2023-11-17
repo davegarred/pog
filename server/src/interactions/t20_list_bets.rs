@@ -28,7 +28,10 @@ pub async fn list_bets<R: WagerRepository>(
     };
     if wagers.is_empty() {
         let message = format!("{} has no outstanding wagers", username.username);
-        return Ok(InteractionResponse::channel_message_with_source_ephemeral(&message, vec![]));
+        return Ok(InteractionResponse::channel_message_with_source_ephemeral(
+            &message,
+            vec![],
+        ));
     }
     let mut message = format!(
         "{} has {} outstanding wagers:",
@@ -38,5 +41,8 @@ pub async fn list_bets<R: WagerRepository>(
     for wager in wagers {
         message.push_str(format!("\n- {}", wager).as_str());
     }
-    Ok(InteractionResponse::channel_message_with_source_ephemeral(&message, vec![]))
+    Ok(InteractionResponse::channel_message_with_source_ephemeral(
+        &message,
+        vec![],
+    ))
 }
