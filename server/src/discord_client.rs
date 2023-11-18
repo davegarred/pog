@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 
 #[async_trait]
-pub trait DiscordClient {
+pub trait DiscordClient: std::fmt::Debug {
     async fn delete_message(&self, message_id: &str, request_token: &str) -> Result<(), Error>;
     async fn set_message(
         &self,

@@ -1,6 +1,8 @@
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
 use crate::interactions::t32_settle_bet::close_message;
+use crate::metric;
+use crate::observe::Timer;
 use crate::wager::WagerStatus;
 use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::{InteractionObject, MessageComponentInteractionData};
@@ -12,6 +14,9 @@ pub async fn bet_selected<R: WagerRepository, C: DiscordClient>(
     repo: &R,
     client: &C,
 ) -> Result<InteractionResponse, Error> {
+    let _timer = Timer::new("t31_bet_selected_time");
+    metric(|mut m| m.count("t31_bet_selected"));
+
     let wager_id = match data.values.get(0) {
         Some(wager_id) => wager_id,
         None => return Err("missing response to bet closing reason selection".into()),

@@ -5,6 +5,7 @@ use axum::routing::get;
 use axum::Router;
 use lambda_http::http::HeaderMap;
 use lambda_http::{run, Error};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use discord_api::interaction_request::InteractionObject;
 use discord_api::interaction_response::InteractionResponse;
@@ -20,16 +21,46 @@ mod discord_client;
 mod discord_id;
 mod error;
 mod interactions;
+mod observe;
 mod postgres_repository;
 mod response;
 mod verify;
 mod wager;
 mod wager_repository;
 
+use crate::observe::Metrics;
+use once_cell::sync::OnceCell;
+
+pub static POG_METRIC: OnceCell<Arc<Mutex<Metrics>>> = OnceCell::new();
+
 pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Chargers outright";
+
+pub fn metric(f: impl Fn(MutexGuard<Metrics>)) {
+    let pog_metric = match POG_METRIC.get() {
+        Some(metric) => metric.clone(),
+        None => {
+            println!("no metrics configured");
+            return;
+        }
+    };
+    let metric = pog_metric.lock().unwrap();
+    f(metric);
+}
+pub async fn reset_metric() {
+    metric(|mut m| {
+        let payload = m.finish("pog_dev");
+        let payload = serde_json::to_string(&payload).unwrap();
+        println!("{}", payload);
+    });
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    let lambda_name =
+        std::env::var("AWS_LAMBDA_FUNCTION_NAME").expect("finding lambda function name");
+    let mut metrics = Metrics::default();
+    metrics.dimension("lambda-name", &lambda_name);
+    POG_METRIC.set(Arc::new(Mutex::new(metrics))).unwrap();
     // TODO: move these to AWS secrets
     let db_user = std::env::var("DB_USER").expect("finding db user from environment");
     let db_pass = std::env::var("DB_PASS").expect("finding db pass from environment");
@@ -58,6 +89,7 @@ async fn main() -> Result<(), Error> {
         get(lambda_query_handler).post(lambda_command_handler),
     );
     let app = Router::new().merge(routes).with_state(state);
+
     run(app).await?;
     Ok(())
 }
@@ -66,38 +98,50 @@ pub async fn lambda_query_handler() -> Result<Response, (StatusCode, String)> {
     Ok(StatusCode::OK.into_response())
 }
 
+const APPLICATION_FAILURE: &str = "application_failure";
+const UNEXPECTED_REQUEST_PAYLOAD: &str = "unexpected request payload";
+const SUCCESS: &str = "success";
+
 async fn lambda_command_handler(
     State(state): State<AppState>,
     headers: HeaderMap,
     body: String,
 ) -> Result<Response, (StatusCode, String)> {
-    println!("POST body: {}", body);
-    match route(state, headers, body).await {
-        Ok(response) => Ok(str_response(response).into_response()),
+    println!("{}", body);
+    let result = match route(state, headers, body).await {
+        Ok(response) => {
+            metric(|mut m| m.count(SUCCESS));
+            Ok(str_response(response).into_response())
+        }
         Err(err) => match err {
             error::Error::NotAuthorized => Ok((StatusCode::UNAUTHORIZED).into_response()),
             error::Error::Invalid(message) => {
                 println!("ERROR unexpected error: {}", message);
+                metric(|mut m| m.count(UNEXPECTED_REQUEST_PAYLOAD));
                 Ok((StatusCode::BAD_REQUEST).into_response())
             }
             error::Error::DatabaseFailure(message) => {
                 println!("ERROR db connection failure: {}", message);
+                metric(|mut m| m.count(APPLICATION_FAILURE));
                 Ok((StatusCode::INTERNAL_SERVER_ERROR).into_response())
             }
             error::Error::ClientFailure(message) => {
                 println!("ERROR Client failure: {}", message);
+                metric(|mut m| m.count(APPLICATION_FAILURE));
                 Ok((StatusCode::INTERNAL_SERVER_ERROR).into_response())
             }
             error::Error::UnresolvedDiscordUser => {
+                metric(|mut m| m.count(UNEXPECTED_REQUEST_PAYLOAD));
                 Ok(str_response("not a user in this channel".into()).into_response())
             }
         },
-    }
+    };
+    reset_metric().await;
+    result
 }
 
 fn str_response(response: InteractionResponse) -> axum::http::Response<String> {
     let payload = serde_json::to_string(&response).unwrap();
-    println!("response: {}", payload);
     match axum::response::Response::builder()
         .status(axum::http::StatusCode::OK)
         .header("Content-Type", "application/json")

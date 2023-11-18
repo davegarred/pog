@@ -6,9 +6,15 @@ use discord_api::InteractionError;
 
 use crate::discord_id::{combine_user_payload, DiscordId};
 use crate::error::Error;
-use crate::ADD_BET_PLACEHOLDER_TEXT;
+use crate::observe::Timer;
+use crate::{metric, ADD_BET_PLACEHOLDER_TEXT};
 
-pub fn initiate_bet(data: ApplicationCommandInteractionData) -> Result<InteractionResponse, Error> {
+pub async fn initiate_bet(
+    data: ApplicationCommandInteractionData,
+) -> Result<InteractionResponse, Error> {
+    let _timer = Timer::new("t10_initiate_bet_time");
+    metric(|mut m| m.count("t10_initiate_bet"));
+
     let option = match data.options.get(0) {
         Some(option) => option,
         None => return Err("bet command sent with empty options".into()),
