@@ -1,6 +1,8 @@
 Description: Deploys the Lambdas for pog
-
 Parameters:
+  Environment:
+    Description: A designation for this environment, e.g., 'prod'
+    Type: String
   Vpc:
     Description: The vpc to deploy the lambda
     Type: String
@@ -132,6 +134,7 @@ Resources:
         Variables:
           DISCORD_APPLICATION_ID: !Ref DiscordApplicationId
           DISCORD_TOKEN: !Ref DiscordApplicationToken
+          ENVIRONMENT: !Ref Environment
   ClientFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -165,6 +168,7 @@ Resources:
           DB_USER: !Ref DbUserName
           DB_PASS: !Ref DbPassword
           DISCORD_TOKEN: !Ref DiscordApplicationToken
+          ENVIRONMENT: !Ref Environment
   ServerFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:

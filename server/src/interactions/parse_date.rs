@@ -1,6 +1,10 @@
+use crate::metric;
 use chrono::{Datelike, Duration, NaiveDate, Utc};
 
 pub fn parse_date(value: &str) -> Option<NaiveDate> {
+    if value.is_empty() {
+        return None;
+    }
     if let Ok(date) = NaiveDate::parse_from_str(value, "%m/%d/%Y") {
         return Some(date);
     }
@@ -21,7 +25,10 @@ fn try_guessing_year(value: &str, today: NaiveDate) -> Option<NaiveDate> {
                 Some(date + chrono::Months::new(12))
             }
         }
-        Err(_) => None,
+        Err(_) => {
+            metric(|mut m| m.count("parse_date_failure"));
+            None
+        }
     }
 }
 

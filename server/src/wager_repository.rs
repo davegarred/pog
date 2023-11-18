@@ -4,7 +4,7 @@ use crate::wager::{Wager, WagerStatus};
 use std::sync::{Arc, Mutex};
 
 #[async_trait::async_trait]
-pub trait WagerRepository {
+pub trait WagerRepository: std::fmt::Debug {
     async fn insert(&self, wager: Wager) -> Result<(), Error>;
     async fn get(&self, wager_id: i32) -> Option<Wager>;
     async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error>;

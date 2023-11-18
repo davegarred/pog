@@ -1,5 +1,7 @@
 use crate::discord_id::DiscordId;
 use crate::error::Error;
+use crate::metric;
+use crate::observe::Timer;
 use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::ApplicationCommandInteractionData;
 use discord_api::interaction_response::InteractionResponse;
@@ -9,6 +11,9 @@ pub async fn list_bets<R: WagerRepository>(
     data: ApplicationCommandInteractionData,
     repo: &R,
 ) -> Result<InteractionResponse, Error> {
+    let _timer = Timer::new("t20_list_bets_time");
+    metric(|mut m| m.count("t20_list_bets"));
+
     let option = match data.options.get(0) {
         Some(option) => option,
         None => return Err("bet command sent with empty options".into()),

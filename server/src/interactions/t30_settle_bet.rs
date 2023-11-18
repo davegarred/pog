@@ -1,5 +1,7 @@
 use crate::discord_id::DiscordId;
 use crate::error::Error;
+use crate::metric;
+use crate::observe::Timer;
 use crate::wager::Wager;
 use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::{ApplicationCommandInteractionData, User};
@@ -10,6 +12,9 @@ pub async fn pay_bet<R: WagerRepository>(
     user: &User,
     repo: &R,
 ) -> Result<InteractionResponse, Error> {
+    let _timer = Timer::new("t30_pay_bet_time");
+    metric(|mut m| m.count("t30_pay_bet"));
+
     let wagers = match DiscordId::from_raw_str(&user.id) {
         Some(user_id) => repo.search_by_user_id(&user_id).await?,
         None => vec![],

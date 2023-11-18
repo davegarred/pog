@@ -5,6 +5,7 @@ use pog_common::{Authorization, DeleteMessage, DiscordMessage};
 
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
+use crate::observe::Timer;
 
 #[derive(Debug, Clone)]
 pub struct DefaultDiscordClient {
@@ -43,6 +44,8 @@ impl DiscordClient for DefaultDiscordClient {
         };
         let message = DiscordMessage::Delete(delete);
         let payload = serde_json::to_vec(&message).unwrap();
+
+        let _timer = Timer::new("client_delete_time");
         match self
             .client
             .invoke()

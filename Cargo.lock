@@ -2019,7 +2019,7 @@ dependencies = [
  "futures",
  "hex",
  "lambda_http",
- "log",
+ "once_cell",
  "pog_common",
  "rand_core",
  "serde",

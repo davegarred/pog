@@ -1,5 +1,7 @@
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
+use crate::metric;
+use crate::observe::Timer;
 use crate::wager::WagerStatus;
 use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::{InteractionObject, MessageComponentInteractionData};
@@ -12,6 +14,9 @@ pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
     repo: &R,
     client: &C,
 ) -> Result<InteractionResponse, Error> {
+    let _timer = Timer::new("t32_settle_bet_time");
+    metric(|mut m| m.count("t32_settle_bet"));
+
     let (designator, wager_id) = split_custom_id(&data.custom_id)?;
 
     let wager_id = match wager_id.parse::<i32>() {

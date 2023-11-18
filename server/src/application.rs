@@ -53,7 +53,7 @@ where
         user: &User,
     ) -> Result<InteractionResponse, Error> {
         match data.name.as_str() {
-            pog_common::ADD_BET_COMMAND => initiate_bet(data),
+            pog_common::ADD_BET_COMMAND => initiate_bet(data).await,
             pog_common::LIST_BET_COMMAND => list_bets(data, &self.repo).await,
             pog_common::SETTLE_BET_COMMAND => pay_bet(data, user, &self.repo).await,
             &_ => Err(Error::Invalid(format!(
@@ -293,7 +293,7 @@ mod test {
         set_client_message(&client, Some("original message".to_string()));
         let app = Application::new(repo, client.clone());
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"No bets were settled"}}"#;
+        let expected = r#"{"type":4,"data":{"content":"No bets were settled","flags":64}}"#;
         assert_response(result, expected);
         assert_eq!(
             Some("original message".to_string()),
