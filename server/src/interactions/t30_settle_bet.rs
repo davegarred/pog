@@ -23,6 +23,7 @@ pub async fn pay_bet<R: WagerRepository>(
         Ok(InteractionResponse::channel_message_with_source_ephemeral(
             "You have no open bets",
             vec![],
+            vec![],
         ))
     } else {
         Ok(open_select_wager_for_close_choices(wagers))
@@ -33,7 +34,7 @@ pub fn open_select_wager_for_close_choices(wagers: Vec<Wager>) -> InteractionRes
     let mut options: Vec<SelectMenuOption> = Default::default();
     for wager in wagers {
         let value = format!("{}", wager.wager_id);
-        let description = wager.to_string();
+        let description = wager.simplified_string();
         options.push(SelectMenuOption::new(value.clone(), value, description));
     }
     let close_bet = Component::select_choice("settle", "Close which bet?", options);

@@ -46,7 +46,7 @@ pub async fn add_wager<R: WagerRepository>(
         expected_settle_date,
     };
 
-    let response_message = wager.to_resolved_string();
+    let response_message = wager.to_string();
     repo.insert(wager).await?;
     Ok(response_message.into())
 }

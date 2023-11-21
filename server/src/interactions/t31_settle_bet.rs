@@ -1,3 +1,6 @@
+use discord_api::interaction_request::{InteractionObject, MessageComponentInteractionData};
+use discord_api::interaction_response::{Component, InteractionResponse};
+
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
 use crate::interactions::t32_settle_bet::close_message;
@@ -5,8 +8,6 @@ use crate::metric;
 use crate::observe::Timer;
 use crate::wager::WagerStatus;
 use crate::wager_repository::WagerRepository;
-use discord_api::interaction_request::{InteractionObject, MessageComponentInteractionData};
-use discord_api::interaction_response::{Component, InteractionResponse};
 
 pub async fn bet_selected<R: WagerRepository, C: DiscordClient>(
     data: MessageComponentInteractionData,
@@ -39,7 +40,7 @@ pub async fn bet_selected<R: WagerRepository, C: DiscordClient>(
 
     let offering_won = format!("{} won", wager.offering);
     let accepting_won = format!("{} won", wager.accepting);
-    let content = format!("Closing: {}", wager);
+    let content = format!("Closing: {}", wager.simplified_string());
     Ok(InteractionResponse::channel_message_with_source_ephemeral(
         &content,
         vec![Component::action_row(vec![
@@ -52,5 +53,6 @@ pub async fn bet_selected<R: WagerRepository, C: DiscordClient>(
             Component::button("No bet", 1, format!("nobet_{}", wager_id).as_str()),
             Component::button("Cancel", 2, format!("cancel_{}", wager_id).as_str()),
         ])],
+        vec![],
     ))
 }

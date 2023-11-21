@@ -1,3 +1,4 @@
+use crate::interaction_response::allowed_mention::AllowedMention;
 use crate::interaction_response::{Component, InteractionCallbackData};
 use serde::{Deserialize, Serialize};
 
@@ -42,12 +43,14 @@ impl InteractionResponse {
     pub fn channel_message_with_source_ephemeral(
         content: &str,
         components: Vec<Component>,
+        allowed_mentions: Vec<AllowedMention>,
     ) -> InteractionResponse {
         InteractionResponse {
             response_type: 4,
             data: Some(InteractionCallbackData::ephemeral_message_callback(
                 Some(content.to_string()),
                 components,
+                allowed_mentions,
             )),
         }
     }
@@ -58,6 +61,7 @@ impl InteractionResponse {
             data: Some(InteractionCallbackData::ephemeral_message_callback(
                 Some(content),
                 components,
+                vec![],
             )),
         }
     }

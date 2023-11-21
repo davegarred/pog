@@ -91,7 +91,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use chrono::NaiveDate;
+    use chrono::{Local, NaiveDate};
     use std::fs;
 
     use discord_api::interaction_request::InteractionObject;
@@ -122,14 +122,18 @@ mod test {
             InMemWagerRepository::default(),
             TestDiscordClient::default(),
         );
+
         let result = app.request_handler(request).await.unwrap();
 
-        // TODO: improve this check
-        assert_eq!(result.response_type, 9);
+        let found = serde_json::to_string(&result).unwrap();
+        let mut expected = r#"{"type":9,"data":{"custom_id":"1050119194533961860|Cisco","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10,"required":true}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"Jets beat the Chargers outright","style":2,"min_length":3,"max_length":100,"required":true}]},{"type":1,"components":[{"type":4,"custom_id":"settlement","label":"When will this bet settle?","placeholder":""#.to_string();
+        expected += Local::now().format("%m/%d").to_string().as_str();
+        expected += r#"","style":1,"min_length":3,"max_length":10,"required":false}]}]}}"#;
+        assert_eq!(found, expected);
     }
 
     #[tokio::test]
-    async fn modal_response() {
+    async fn t11_bet_modal_request() {
         let request = expect_request_from("dto_payloads/T11_bet_modal_request.json");
         let app = Application::new(
             InMemWagerRepository::default(),
@@ -145,24 +149,24 @@ mod test {
     }
 
     #[tokio::test]
-    async fn list_bets_no_bets() {
+    async fn t20_list_bets_request_no_bets() {
         let request = expect_request_from("dto_payloads/T20_list_bets_request.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             TestDiscordClient::default(),
         );
+
         let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
-            result,
-            InteractionResponse::channel_message_with_source_ephemeral(
-                "Harx has no outstanding wagers",
-                vec![]
-            )
+            found,
+            r#"{"type":4,"data":{"content":"Harx has no outstanding wagers","flags":64}}"#
         );
     }
 
     #[tokio::test]
-    async fn list_bets() {
+    async fn t20_list_bets_request() {
         let request = expect_request_from("dto_payloads/T20_list_bets_request.json");
         let repo = InMemWagerRepository::default();
         repo.insert(Wager {
@@ -180,35 +184,36 @@ mod test {
         .await
         .unwrap();
         let app = Application::new(repo, TestDiscordClient::default());
+
         let result = app.request_handler(request).await.unwrap();
-        let expected =
-            "Harx has 1 outstanding wagers:\n- ---- vs Woody, wager: $20 - Rangers repeat";
+
+        let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
-            result,
-            InteractionResponse::channel_message_with_source_ephemeral(expected, vec![])
-        )
+            found,
+            r#"{"type":4,"data":{"content":"Harx has 1 outstanding wagers:\n- ---- vs Woody, wager: $20 - Rangers repeat","flags":64}}"#
+        );
     }
 
     #[tokio::test]
-    async fn list_bets_no_global_user() {
+    async fn t20_list_bets_request_w_no_global_user() {
         let request =
             expect_request_from("dto_payloads/T20_list_bets_request_w_no_global_user.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             TestDiscordClient::default(),
         );
+
         let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
-            result,
-            InteractionResponse::channel_message_with_source_ephemeral(
-                "johnanon has no outstanding wagers",
-                vec![]
-            )
+            found,
+            r#"{"type":4,"data":{"content":"johnanon has no outstanding wagers","flags":64}}"#
         );
     }
 
     #[tokio::test]
-    async fn payout_response() {
+    async fn t30_payout_request() {
         let request = expect_request_from("dto_payloads/T30_payout_request.json");
         let repository = InMemWagerRepository::default();
         repository
@@ -227,25 +232,29 @@ mod test {
             .await
             .unwrap();
         let app = Application::new(repository, TestDiscordClient::default());
+
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"Close out a bet","components":[{"type":1,"components":[{"type":3,"custom_id":"settle","options":[{"label":"1","value":"1","description":"Harx vs Woody, wager: $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}],"flags":64}}"#;
+
+        let expected = r#"{"type":4,"data":{"content":"Close out a bet","flags":64,"components":[{"type":1,"components":[{"type":3,"custom_id":"settle","options":[{"label":"1","value":"1","description":"Harx vs Woody, wager: $20 - Raiders win out"}],"placeholder":"Close which bet?"}]}]}}"#;
         assert_response(result, expected);
     }
 
     #[tokio::test]
-    async fn payout_response_no_bet() {
+    async fn t30_payout_request_no_bet() {
         let request = expect_request_from("dto_payloads/T30_payout_request.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             TestDiscordClient::default(),
         );
+
         let result = app.request_handler(request).await.unwrap();
+
         let expected = r#"{"type":4,"data":{"content":"You have no open bets","flags":64}}"#;
         assert_response(result, expected);
     }
 
     #[tokio::test]
-    async fn select_wager_close_reason_response() {
+    async fn t31_selected_bet_to_close_request() {
         let request = expect_request_from("dto_payloads/T31_selected_bet_to_close_request.json");
         let repo = InMemWagerRepository::default();
         let client = TestDiscordClient::default();
@@ -265,8 +274,10 @@ mod test {
         .await
         .unwrap();
         let app = Application::new(repo, client.clone());
+
         let result = app.request_handler(request).await.unwrap();
-        let expected = r#"{"type":4,"data":{"content":"Closing: ---- vs Woody, wager: $20 - Rangers repeat (settles: May  5)","components":[{"type":1,"components":[{"type":2,"style":1,"label":"---- won","custom_id":"offering_109","disabled":false},{"type":2,"style":1,"label":"Woody won","custom_id":"accepting_109","disabled":false},{"type":2,"style":1,"label":"No bet","custom_id":"nobet_109","disabled":false},{"type":2,"style":2,"label":"Cancel","custom_id":"cancel_109","disabled":false}]}],"flags":64}}"#;
+
+        let expected = r#"{"type":4,"data":{"content":"Closing: ---- vs Woody, wager: $20 - Rangers repeat (settles: May  5)","flags":64,"components":[{"type":1,"components":[{"type":2,"style":1,"label":"---- won","custom_id":"offering_109","disabled":false},{"type":2,"style":1,"label":"Woody won","custom_id":"accepting_109","disabled":false},{"type":2,"style":1,"label":"No bet","custom_id":"nobet_109","disabled":false},{"type":2,"style":2,"label":"Cancel","custom_id":"cancel_109","disabled":false}]}]}}"#;
         assert_response(result, expected);
         assert_eq!(None, get_client_message(&client))
     }
@@ -292,7 +303,9 @@ mod test {
         let client = TestDiscordClient::default();
         set_client_message(&client, Some("original message".to_string()));
         let app = Application::new(repo, client.clone());
+
         let result = app.request_handler(request).await.unwrap();
+
         let expected = r#"{"type":4,"data":{"content":"No bets were settled","flags":64}}"#;
         assert_response(result, expected);
         assert_eq!(
@@ -322,7 +335,9 @@ mod test {
         .await
         .unwrap();
         let app = Application::new(repo, client.clone());
+
         let result = app.request_handler(request).await.unwrap();
+
         let expected = r#"{"type":4,"data":{"content":"Woody won: <@695398918694895710> vs Woody, wager: $20 - Rangers repeat"}}"#;
         assert_response(result, expected);
         assert_eq!(None, get_client_message(&client))

@@ -36,6 +36,7 @@ pub async fn list_bets<R: WagerRepository>(
         return Ok(InteractionResponse::channel_message_with_source_ephemeral(
             &message,
             vec![],
+            vec![],
         ));
     }
     let mut message = format!(
@@ -44,10 +45,9 @@ pub async fn list_bets<R: WagerRepository>(
         wagers.len()
     );
     for wager in wagers {
-        message.push_str(format!("\n- {}", wager).as_str());
+        message.push_str(format!("\n- {}", wager.simplified_string()).as_str());
     }
-    Ok(InteractionResponse::channel_message_with_source_ephemeral(
-        &message,
-        vec![],
-    ))
+    let response =
+        InteractionResponse::channel_message_with_source_ephemeral(&message, vec![], vec![]);
+    Ok(response)
 }

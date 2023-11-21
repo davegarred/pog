@@ -38,19 +38,20 @@ pub async fn settle_bet<R: WagerRepository, C: DiscordClient>(
             return Ok(InteractionResponse::channel_message_with_source_ephemeral(
                 "No bets were settled",
                 vec![],
+                vec![],
             ))
         }
     };
 
     let message = match wager.status {
         WagerStatus::OfferingWon => {
-            format!("{} won: {}", wager.offering, wager.to_resolved_string())
+            format!("{} won: {}", wager.offering, wager)
         }
         WagerStatus::AcceptingWon => {
-            format!("{} won: {}", wager.accepting, wager.to_resolved_string())
+            format!("{} won: {}", wager.accepting, wager)
         }
-        WagerStatus::NoBet => format!("No bet: {}", wager.to_resolved_string()),
-        WagerStatus::Paid => format!("No bet: {}", wager.to_resolved_string()),
+        WagerStatus::NoBet => format!("No bet: {}", wager),
+        WagerStatus::Paid => format!("No bet: {}", wager),
         WagerStatus::Open => {
             return Err(Error::Invalid(format!("wager {} is still open", wager_id)))
         }

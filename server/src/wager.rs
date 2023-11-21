@@ -19,20 +19,6 @@ pub struct Wager {
 
 impl Display for Wager {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let close = match (self.expected_settle_date, self.status) {
-            (Some(date), WagerStatus::Open) => format!(" (settles: {})", date.format("%b %e")),
-            _ => "".to_string(),
-        };
-        write!(
-            f,
-            "{} vs {}, wager: {} - {}{}",
-            self.offering, self.accepting, self.wager, self.outcome, close
-        )
-    }
-}
-
-impl Wager {
-    pub fn to_resolved_string(&self) -> String {
         let offering = match &self.resolved_offering_user {
             Some(id) => id.to_string(),
             None => self.offering.to_string(),
@@ -41,10 +27,35 @@ impl Wager {
             Some(id) => id.to_string(),
             None => self.accepting.to_string(),
         };
-        format!(
-            "{} vs {}, wager: {} - {}",
-            offering, accepting, self.wager, self.outcome
+        write!(
+            f,
+            "{} vs {}, wager: {} - {}{}",
+            offering,
+            accepting,
+            self.wager,
+            self.outcome,
+            self.settlement_tail()
         )
+    }
+}
+
+impl Wager {
+    pub fn simplified_string(&self) -> String {
+        format!(
+            "{} vs {}, wager: {} - {}{}",
+            self.offering,
+            self.accepting,
+            self.wager,
+            self.outcome,
+            self.settlement_tail()
+        )
+    }
+
+    fn settlement_tail(&self) -> String {
+        match (self.expected_settle_date, self.status) {
+            (Some(date), WagerStatus::Open) => format!(" (settles: {})", date.format("%b %e")),
+            _ => "".to_string(),
+        }
     }
 }
 
@@ -104,7 +115,7 @@ fn test_format() {
     };
     assert_eq!(
         wager.to_string(),
-        "Harx vs Woody, wager: $20 - Cowboys over the Raiders (settles: May  5)"
+        "<@1234567890> vs Woody, wager: $20 - Cowboys over the Raiders (settles: May  5)"
     );
 }
 
@@ -124,7 +135,7 @@ fn test_format_no_expected_settlement_date() {
     };
     assert_eq!(
         wager.to_string(),
-        "Harx vs Woody, wager: $20 - Cowboys over the Raiders"
+        "<@1234567890> vs Woody, wager: $20 - Cowboys over the Raiders"
     );
 }
 
@@ -144,6 +155,6 @@ fn test_format_paid() {
     };
     assert_eq!(
         wager.to_string(),
-        "Harx vs Woody, wager: $20 - Cowboys over the Raiders"
+        "<@1234567890> vs Woody, wager: $20 - Cowboys over the Raiders"
     );
 }
