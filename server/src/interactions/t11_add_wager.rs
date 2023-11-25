@@ -3,8 +3,8 @@ use crate::error::Error;
 use crate::interactions::parse_date::parse_date;
 use crate::metric;
 use crate::observe::Timer;
+use crate::repos::WagerRepository;
 use crate::wager::{Wager, WagerStatus};
-use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::{ModalSubmitInteractionData, User};
 use discord_api::interaction_response::InteractionResponse;
 

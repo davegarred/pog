@@ -12,7 +12,7 @@ use discord_api::interaction_response::InteractionResponse;
 
 use crate::application::Application;
 use crate::default_discord_client::DefaultDiscordClient;
-use crate::postgres_repository::PostgresWagerRepo;
+use crate::repos::{new_db_pool, PostgresAttendanceRepository, PostgresWagerRepo};
 use crate::verify::VerifyTool;
 
 mod application;
@@ -22,11 +22,10 @@ mod discord_id;
 mod error;
 mod interactions;
 mod observe;
-mod postgres_repository;
+mod repos;
 mod response;
 mod verify;
 mod wager;
-mod wager_repository;
 
 use crate::observe::Metrics;
 use once_cell::sync::OnceCell;
@@ -34,6 +33,7 @@ use once_cell::sync::OnceCell;
 pub static POG_METRIC: OnceCell<Arc<Mutex<Metrics>>> = OnceCell::new();
 
 pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Jets beat the Chargers outright";
+pub const CURRENT_FF_WEEK: u8 = 11;
 
 pub fn metric(f: impl Fn(MutexGuard<Metrics>)) {
     let pog_metric = match POG_METRIC.get() {
@@ -79,9 +79,11 @@ async fn main() -> Result<(), Error> {
         "postgresql://{}:{}@{}:5432/{}",
         db_user, db_pass, db_host, db_name
     );
-    let repo = PostgresWagerRepo::new(&db_connection).await;
+    let db_pool = new_db_pool(&db_connection).await;
+    let wager_repo = PostgresWagerRepo::new(db_pool.clone());
+    let attendance_repo = PostgresAttendanceRepository::new(db_pool);
     let client = DefaultDiscordClient::new(application_id, application_token, client_lambda).await;
-    let application = Application::new(repo, client);
+    let application = Application::new(wager_repo, attendance_repo, client);
     let state = AppState {
         verifier: VerifyTool::new(&public_key),
         application,
@@ -144,6 +146,7 @@ async fn lambda_command_handler(
 
 fn str_response(response: InteractionResponse) -> axum::http::Response<String> {
     let payload = serde_json::to_string(&response).unwrap();
+    println!("response: {}", payload);
     match axum::response::Response::builder()
         .status(axum::http::StatusCode::OK)
         .header("Content-Type", "application/json")
@@ -173,5 +176,6 @@ async fn route(
 #[derive(Debug, Clone)]
 struct AppState {
     pub verifier: VerifyTool,
-    pub application: Application<PostgresWagerRepo, DefaultDiscordClient>,
+    pub application:
+        Application<PostgresWagerRepo, PostgresAttendanceRepository, DefaultDiscordClient>,
 }

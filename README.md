@@ -30,7 +30,7 @@ To update a migration:
 ```shell
 flyway \
   -url="jdbc:postgresql://{HOST}:5432/{DATABASE}?user={USER}" \
-  -locations="filesystem:./db" \
+  -locations="filesystem:./db/prod" \
   migrate
 ```
 The user's password will be queried before running.

@@ -6,8 +6,8 @@ use crate::error::Error;
 use crate::interactions::t32_settle_bet::close_message;
 use crate::metric;
 use crate::observe::Timer;
+use crate::repos::WagerRepository;
 use crate::wager::WagerStatus;
-use crate::wager_repository::WagerRepository;
 
 pub async fn bet_selected<R: WagerRepository, C: DiscordClient>(
     data: MessageComponentInteractionData,

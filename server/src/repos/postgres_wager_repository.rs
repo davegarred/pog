@@ -1,11 +1,11 @@
 use futures::TryStreamExt;
-use sqlx::postgres::{PgPoolOptions, PgRow};
+use sqlx::postgres::PgRow;
 use sqlx::{Pool, Postgres, Row, Transaction};
 
 use crate::discord_id::DiscordId;
 use crate::error::Error;
+use crate::repos::WagerRepository;
 use crate::wager::{Wager, WagerStatus};
-use crate::wager_repository::WagerRepository;
 
 const INSERT_WAGER: &str = r#"INSERT INTO wagers(wager_id,time,offering,resolved_offering_user,accepting,resolved_accepting_user,wager,outcome,status,expected_settle_date)
         VALUES (nextval('seq_wager_id'), $1, $2, $3, $4, $5, $6, $7, $8, $9)"#;
@@ -22,13 +22,8 @@ pub struct PostgresWagerRepo {
 }
 
 impl PostgresWagerRepo {
-    pub async fn new(connection_string: &str) -> PostgresWagerRepo {
-        let pool = PgPoolOptions::new()
-            .max_connections(2)
-            .connect(connection_string)
-            .await
-            .expect("unable to connect to database");
-        PostgresWagerRepo { pool }
+    pub fn new(pool: Pool<Postgres>) -> Self {
+        Self { pool }
     }
 }
 
@@ -135,16 +130,16 @@ fn row_to_wager(row: PgRow) -> Wager {
 
 #[cfg(test)]
 mod test {
-    use crate::postgres_repository::PostgresWagerRepo;
-    use crate::wager::{Wager, WagerStatus};
-    use crate::wager_repository::WagerRepository;
     use chrono::NaiveDate;
+
+    use crate::repos::WagerRepository;
+    use crate::repos::{new_db_pool, PostgresWagerRepo};
+    use crate::wager::{Wager, WagerStatus};
 
     #[tokio::test]
     async fn repo() {
-        let repo =
-            PostgresWagerRepo::new("postgresql://pog_user:pog_pass@127.0.0.1:5432/pog_server")
-                .await;
+        let db_pool = new_db_pool("postgresql://pog_user:pog_pass@127.0.0.1:5432/pog_server").await;
+        let repo = PostgresWagerRepo::new(db_pool.clone());
         let user_a = uuid::Uuid::new_v4().to_string();
         let user_b = uuid::Uuid::new_v4().to_string();
         let user_c = uuid::Uuid::new_v4().to_string();

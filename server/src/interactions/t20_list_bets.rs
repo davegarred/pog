@@ -2,7 +2,7 @@ use crate::discord_id::DiscordId;
 use crate::error::Error;
 use crate::metric;
 use crate::observe::Timer;
-use crate::wager_repository::WagerRepository;
+use crate::repos::WagerRepository;
 use discord_api::interaction_request::ApplicationCommandInteractionData;
 use discord_api::interaction_response::InteractionResponse;
 use discord_api::InteractionError;

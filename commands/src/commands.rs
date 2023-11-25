@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use pog_common::{ADD_BET_COMMAND, LIST_BET_COMMAND, SETTLE_BET_COMMAND};
+use pog_common::{ADD_BET_COMMAND, ATTENDANCE_BET_COMMAND, LIST_BET_COMMAND, SETTLE_BET_COMMAND};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationCommand {
@@ -61,6 +61,21 @@ impl ApplicationCommand {
             options: None,
         }
     }
+
+    pub fn attendance() -> Self {
+        Self {
+            id: None,
+            command_type: 1,
+            name: ATTENDANCE_BET_COMMAND.to_string(),
+            description: "Check attendance".to_string(),
+            options: Some(vec![ApplicationCommandOptions {
+                command_type: 3,
+                name: "manager".to_string(),
+                description: "Which team manager?".to_string(),
+                required: false,
+            }]),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -95,6 +110,14 @@ mod test {
         assert_eq!(
             &command,
             r#"{"type":1,"name":"settle","description":"Close a bet"}"#
+        )
+    }
+    #[test]
+    fn attendance() {
+        let command = serde_json::to_string(&ApplicationCommand::attendance()).unwrap();
+        assert_eq!(
+            &command,
+            r#"{"type":1,"name":"attendance","description":"Check attendance"}"#
         )
     }
 

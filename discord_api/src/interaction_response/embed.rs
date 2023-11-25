@@ -32,7 +32,7 @@ pub struct Embed {
 }
 
 impl Embed {
-    fn rich() -> Self {
+    pub fn rich() -> Self {
         Self {
             title: None,
             embed_type: "rich".to_string(),

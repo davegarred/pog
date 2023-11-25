@@ -11,4 +11,4 @@ services:
       POSTGRES_USER: pog_user
       POSTGRES_PASSWORD: pog_pass
     volumes:
-      - './db:/docker-entrypoint-initdb.d'
+      - './db/migrations:/docker-entrypoint-initdb.d'

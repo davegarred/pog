@@ -2,8 +2,8 @@ use crate::discord_id::DiscordId;
 use crate::error::Error;
 use crate::metric;
 use crate::observe::Timer;
+use crate::repos::WagerRepository;
 use crate::wager::Wager;
-use crate::wager_repository::WagerRepository;
 use discord_api::interaction_request::{ApplicationCommandInteractionData, User};
 use discord_api::interaction_response::{Component, InteractionResponse, SelectMenuOption};
 
