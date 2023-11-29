@@ -7,7 +7,6 @@ pub struct InteractionDataOption {
     pub option_type: u8,
     pub name: String,
     pub value: String,
-    // #[serde(skip_serializing_if = "Vec::is_empty")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub options: Option<Vec<InteractionDataOption>>,
 }

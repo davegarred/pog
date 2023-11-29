@@ -10,7 +10,6 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use discord_api::interaction_request::InteractionObject;
 use discord_api::interaction_response::InteractionResponse;
 
-use crate::application::Application;
 use crate::default_discord_client::DefaultDiscordClient;
 use crate::repos::{new_db_pool, PostgresAttendanceRepository, PostgresWagerRepo};
 use crate::verify::VerifyTool;
@@ -20,13 +19,13 @@ mod default_discord_client;
 mod discord_client;
 mod discord_id;
 mod error;
-mod interactions;
 mod observe;
 mod repos;
 mod response;
 mod verify;
 mod wager;
 
+use crate::application::Application;
 use crate::observe::Metrics;
 use once_cell::sync::OnceCell;
 

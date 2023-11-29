@@ -117,7 +117,7 @@ mod test {
         let command = serde_json::to_string(&ApplicationCommand::attendance()).unwrap();
         assert_eq!(
             &command,
-            r#"{"type":1,"name":"attendance","description":"Check attendance"}"#
+            r#"{"type":1,"name":"attendance","description":"Check attendance","options":[{"type":3,"name":"manager","description":"Which team manager?","required":false}]}"#
         )
     }
 

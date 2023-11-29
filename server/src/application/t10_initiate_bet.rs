@@ -4,38 +4,49 @@ use discord_api::interaction_request::ApplicationCommandInteractionData;
 use discord_api::interaction_response::{Component, InteractionCallbackData, InteractionResponse};
 use discord_api::InteractionError;
 
+use crate::application::Application;
+use crate::discord_client::DiscordClient;
 use crate::discord_id::{combine_user_payload, DiscordId};
 use crate::error::Error;
 use crate::observe::Timer;
+use crate::repos::{AttendanceRepository, WagerRepository};
 use crate::{metric, ADD_BET_PLACEHOLDER_TEXT};
 
-pub async fn initiate_bet(
-    data: ApplicationCommandInteractionData,
-) -> Result<InteractionResponse, Error> {
-    let _timer = Timer::new("t10_initiate_bet_time");
-    metric(|mut m| m.count("t10_initiate_bet"));
+impl<WR, AR, C> Application<WR, AR, C>
+where
+    WR: WagerRepository,
+    AR: AttendanceRepository,
+    C: DiscordClient,
+{
+    pub async fn initiate_bet(
+        &self,
+        data: ApplicationCommandInteractionData,
+    ) -> Result<InteractionResponse, Error> {
+        let _timer = Timer::new("t10_initiate_bet_time");
+        metric(|mut m| m.count("t10_initiate_bet"));
 
-    let option = match data.options.get(0) {
-        Some(option) => option,
-        None => return Err("bet command sent with empty options".into()),
-    };
+        let option = match data.options.get(0) {
+            Some(option) => option,
+            None => return Err("bet command sent with empty options".into()),
+        };
 
-    let accepting = option.value.to_string();
-    let accepting_user_payload: String = match DiscordId::attempt_from_str(&accepting) {
-        Some(id) => {
-            let resolved_data = data
-                .resolved
-                .ok_or::<InteractionError>("missing resolved data".into())?;
-            let user = resolved_data.expect_user(&id.str_value())?;
-            let user_name = match &user.global_name {
-                None => &user.username,
-                Some(global_name) => global_name,
-            };
-            combine_user_payload(user_name, Some(id))
-        }
-        None => accepting,
-    };
-    Ok(open_buy_modal(accepting_user_payload))
+        let accepting = option.value.to_string();
+        let accepting_user_payload: String = match DiscordId::attempt_from_str(&accepting) {
+            Some(id) => {
+                let resolved_data = data
+                    .resolved
+                    .ok_or::<InteractionError>("missing resolved data".into())?;
+                let user = resolved_data.expect_user(&id.str_value())?;
+                let user_name = match &user.global_name {
+                    None => &user.username,
+                    Some(global_name) => global_name,
+                };
+                combine_user_payload(user_name, Some(id))
+            }
+            None => accepting,
+        };
+        Ok(open_buy_modal(accepting_user_payload))
+    }
 }
 
 pub fn open_buy_modal(accepting: String) -> InteractionResponse {

@@ -8,13 +8,7 @@ pub trait AttendanceRepository {
 
 #[derive(Clone, Debug)]
 pub struct InMemoryAttendanceRepository {
-    attendance: AttendanceRecords,
-}
-
-impl InMemoryAttendanceRepository {
-    pub fn new(attendance: AttendanceRecords) -> Self {
-        Self { attendance }
-    }
+    pub attendance: AttendanceRecords,
 }
 
 impl Default for InMemoryAttendanceRepository {

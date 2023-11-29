@@ -6,9 +6,6 @@ use discord_api::interaction_response::InteractionResponse;
 
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
-use crate::interactions::{
-    add_wager, attendance, bet_selected, initiate_bet, list_bets, pay_bet, settle_bet,
-};
 use crate::repos::{AttendanceRepository, WagerRepository};
 
 #[derive(Debug, Clone)]
@@ -61,12 +58,10 @@ where
         user: &User,
     ) -> Result<InteractionResponse, Error> {
         match data.name.as_str() {
-            pog_common::ADD_BET_COMMAND => initiate_bet(data).await,
-            pog_common::LIST_BET_COMMAND => list_bets(data, &self.wager_repo).await,
-            pog_common::SETTLE_BET_COMMAND => pay_bet(data, user, &self.wager_repo).await,
-            pog_common::ATTENDANCE_BET_COMMAND => {
-                attendance(data, user, &self.attendance_repo).await
-            }
+            pog_common::ADD_BET_COMMAND => self.initiate_bet(data).await,
+            pog_common::LIST_BET_COMMAND => self.list_bets(data).await,
+            pog_common::SETTLE_BET_COMMAND => self.pay_bet(data, user).await,
+            pog_common::ATTENDANCE_BET_COMMAND => self.attendance(data, user).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
                 data.name
@@ -81,10 +76,8 @@ where
     ) -> Result<InteractionResponse, Error> {
         let ident: String = data.custom_id.chars().take(6).collect();
         match ident.as_str() {
-            "offeri" | "accept" | "nobet_" | "cancel" => {
-                settle_bet(data, request, &self.wager_repo, &self.client).await
-            }
-            "settle" => bet_selected(data, request, &self.wager_repo, &self.client).await,
+            "offeri" | "accept" | "nobet_" | "cancel" => self.settle_bet(data, request).await,
+            "settle" => self.bet_selected(data, request).await,
             &_ => Err("unknown component custom id".into()),
         }
     }
@@ -95,15 +88,16 @@ where
         user: &User,
     ) -> Result<InteractionResponse, Error> {
         match &data.custom_id {
-            &_ => add_wager(data, user, &self.wager_repo).await,
+            &_ => self.add_wager(data, user).await,
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use chrono::{Local, NaiveDate};
     use std::fs;
+
+    use chrono::{Local, NaiveDate};
 
     use discord_api::interaction_request::InteractionObject;
     use discord_api::interaction_response::InteractionResponse;
@@ -384,7 +378,7 @@ mod test {
 
     #[tokio::test]
     async fn t40_attendance_not_an_owner() {
-        let request = expect_request_from("dto_payloads/T40_attendance.json");
+        let request = expect_request_from("dto_payloads/T40_attendance_no_options.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
@@ -396,12 +390,13 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"content":"johnanon has no outstanding wagers","flags":64}}"#
+            r#"{"type":4,"data":{"content":"no attendance records found, is <@695398918694895710> in the league?","flags":64}}"#
         );
     }
+
     #[tokio::test]
-    async fn t40_attendance() {
-        let request = expect_request_from("dto_payloads/T40_attendance.json");
+    async fn t40_attendance_no_options() {
+        let request = expect_request_from("dto_payloads/T40_attendance_no_options.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             test_attendance_repo(),
@@ -413,7 +408,25 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"content":"johnanon has no outstanding wagers","flags":64}}"#
+            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 11","type":"rich","description":"<@695398918694895710>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 10 of 11 weeks","inline":false},{"name":"Game attendance","value":"Attended 30 games","inline":false}]}]}}"#
+        );
+    }
+
+    #[tokio::test]
+    async fn t40_attendance_manager() {
+        let request = expect_request_from("dto_payloads/T40_attendance_manager.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            test_attendance_repo(),
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            found,
+            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 11","type":"rich","description":"<@1050119194533961860>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 7 of 11 weeks","inline":false},{"name":"Game attendance","value":"Attended 14 games","inline":false}]}]}}"#
         );
     }
 
@@ -440,8 +453,9 @@ mod test {
             (460972684986023937, 2, 4).into(),
             (885945439961108550, 0, 0).into(),
         ]);
-        InMemoryAttendanceRepository::new(attendance)
+        InMemoryAttendanceRepository { attendance }
     }
+
     fn expect_request_from(filename: &str) -> InteractionObject {
         let contents = fs::read_to_string(filename).unwrap();
         let request: InteractionObject = serde_json::from_str(&contents).unwrap();

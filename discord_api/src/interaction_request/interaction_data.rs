@@ -111,6 +111,27 @@ pub struct ApplicationCommandInteractionData {
     pub target_id: Option<String>,
 }
 
+impl ApplicationCommandInteractionData {
+    pub fn option_key_values(&self) -> HashMap<String, String> {
+        ApplicationCommandInteractionData::recursive_option_key_values(&self.options)
+    }
+
+    fn recursive_option_key_values(
+        options: &Vec<InteractionDataOption>,
+    ) -> HashMap<String, String> {
+        let mut result = HashMap::default();
+        for option in options {
+            result.insert(option.name.to_string(), option.value.to_string());
+            if let Some(inner_options) = &option.options {
+                result.extend(
+                    ApplicationCommandInteractionData::recursive_option_key_values(inner_options),
+                );
+            }
+        }
+        result
+    }
+}
+
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-message-component-data-structure
 #[derive(PartialEq, Clone, Debug)]
 pub struct MessageComponentInteractionData {
