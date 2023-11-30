@@ -104,6 +104,7 @@ mod test {
 
     use crate::application::Application;
     use crate::discord_client::TestDiscordClient;
+    use crate::discord_id::DiscordId;
     use crate::repos::{
         AttendanceRecords, InMemWagerRepository, InMemoryAttendanceRepository, WagerRepository,
     };
@@ -408,7 +409,7 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 11","type":"rich","description":"<@695398918694895710>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 10 of 11 weeks","inline":false},{"name":"Game attendance","value":"Attended 30 games","inline":false}]}]}}"#
+            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 12","type":"rich","description":"<@695398918694895710>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 10 of 12 weeks","inline":false},{"name":"Game attendance","value":"Attended 30 games","inline":false}]}],"flags":64}}"#
         );
     }
 
@@ -426,7 +427,7 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 11","type":"rich","description":"<@1050119194533961860>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 7 of 11 weeks","inline":false},{"name":"Game attendance","value":"Attended 14 games","inline":false}]}]}}"#
+            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 12","type":"rich","description":"<@1050119194533961860>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 7 of 12 weeks","inline":false},{"name":"Game attendance","value":"Attended 14 games","inline":false}]}]}}"#
         );
     }
 
@@ -439,7 +440,7 @@ mod test {
     }
 
     fn test_attendance_repo() -> InMemoryAttendanceRepository {
-        let attendance = AttendanceRecords(vec![
+        let combined_attendance = AttendanceRecords(vec![
             (695398918694895710, 10, 30).into(),
             (431634941626023936, 10, 21).into(),
             (1048049562960539648, 7, 15).into(),
@@ -453,7 +454,22 @@ mod test {
             (460972684986023937, 2, 4).into(),
             (885945439961108550, 0, 0).into(),
         ]);
-        InMemoryAttendanceRepository { attendance }
+        let mut weekly_attendance: Vec<(String, Vec<DiscordId>)> = Vec::default();
+        weekly_attendance.push(("2023-11-23".to_string(), vec![695398918694895710.into()]));
+        weekly_attendance.push((
+            "2023-11-26".to_string(),
+            vec![
+                695398918694895710.into(),
+                1048049562960539648.into(),
+                431634941626023936.into(),
+            ],
+        ));
+        weekly_attendance.push(("2023-11-27".to_string(), vec![695398918694895710.into()]));
+        let weekly_attendance = weekly_attendance.into();
+        InMemoryAttendanceRepository {
+            combined_attendance,
+            weekly_attendance,
+        }
     }
 
     fn expect_request_from(filename: &str) -> InteractionObject {

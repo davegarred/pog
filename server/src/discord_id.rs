@@ -1,3 +1,4 @@
+use crate::error::Error;
 use std::fmt::Formatter;
 
 #[derive(Debug, Clone, PartialEq, Hash)]
@@ -20,6 +21,20 @@ impl DiscordId {
             return Self::from_raw_str(attempt);
         }
         None
+    }
+
+    pub fn require_from_str(value: &str) -> Result<Self, Error> {
+        let value = str::trim(value);
+        if value.starts_with("<@") && value.ends_with('>') {
+            let len = value.len();
+            let attempt = &value[2..len - 1];
+            if let Some(user_id) = Self::from_raw_str(attempt) {
+                return Ok(user_id);
+            }
+        }
+        Err(format!("unable to parse discord id: {}", value)
+            .as_str()
+            .into())
     }
 
     pub fn from_raw_str(value: &str) -> Option<Self> {

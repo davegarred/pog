@@ -53,3 +53,38 @@ impl From<&PgRow> for AttendanceRecord {
         }
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct WeeklyAttendanceRecord {
+    pub attendance: Vec<(String, Vec<DiscordId>)>,
+}
+
+impl From<Vec<(String, Vec<DiscordId>)>> for WeeklyAttendanceRecord {
+    fn from(attendance: Vec<(String, Vec<DiscordId>)>) -> Self {
+        Self { attendance }
+    }
+}
+
+impl From<Vec<PgRow>> for WeeklyAttendanceRecord {
+    fn from(rows: Vec<PgRow>) -> Self {
+        let mut attendance = vec![];
+        let mut last_date = String::new();
+        let mut current_attendees: Vec<DiscordId> = Vec::new();
+        for row in rows {
+            let date: String = row.get("date");
+            let owner: i64 = row.get("owner");
+            let owner_id = owner.into();
+
+            if date != last_date {
+                if !current_attendees.is_empty() {
+                    attendance.push((last_date.to_string(), current_attendees.clone()));
+                }
+                last_date = date;
+                current_attendees.clear();
+            }
+            current_attendees.push(owner_id);
+        }
+        attendance.push((last_date, current_attendees));
+        Self { attendance }
+    }
+}
