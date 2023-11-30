@@ -4,7 +4,7 @@ mod postgres_attendance_repo;
 mod postgres_wager_repository;
 mod wager_repository;
 
-pub use attendance_record::{AttendanceRecord, AttendanceRecords};
+pub use attendance_record::{AttendanceRecord, AttendanceRecords, WeeklyAttendanceRecord};
 pub use attendance_repository::{AttendanceRepository, InMemoryAttendanceRepository};
 pub use postgres_attendance_repo::PostgresAttendanceRepository;
 pub use postgres_wager_repository::PostgresWagerRepo;

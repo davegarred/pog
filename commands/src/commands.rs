@@ -68,12 +68,20 @@ impl ApplicationCommand {
             command_type: 1,
             name: ATTENDANCE_BET_COMMAND.to_string(),
             description: "Check attendance".to_string(),
-            options: Some(vec![ApplicationCommandOptions {
-                command_type: 3,
-                name: "manager".to_string(),
-                description: "Which team manager?".to_string(),
-                required: false,
-            }]),
+            options: Some(vec![
+                ApplicationCommandOptions {
+                    command_type: 3,
+                    name: "manager".to_string(),
+                    description: "Which team manager?".to_string(),
+                    required: false,
+                },
+                ApplicationCommandOptions {
+                    command_type: 3,
+                    name: "week".to_string(),
+                    description: "Interested in just one week?".to_string(),
+                    required: false,
+                },
+            ]),
         }
     }
 }
@@ -117,7 +125,7 @@ mod test {
         let command = serde_json::to_string(&ApplicationCommand::attendance()).unwrap();
         assert_eq!(
             &command,
-            r#"{"type":1,"name":"attendance","description":"Check attendance","options":[{"type":3,"name":"manager","description":"Which team manager?","required":false}]}"#
+            r#"{"type":1,"name":"attendance","description":"Check attendance","options":[{"type":3,"name":"manager","description":"Which team manager?","required":false},{"type":3,"name":"week","description":"Interested in just one week?","required":false}]}"#
         )
     }
 
