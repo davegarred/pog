@@ -10,7 +10,7 @@ use crate::discord_client::DiscordClient;
 use crate::discord_id::DiscordId;
 use crate::error::Error;
 use crate::observe::Timer;
-use crate::repos::{AttendanceRepository, WagerRepository, WeeklyAttendanceRecord};
+use crate::repos::{AttendanceRepository, WagerRepository};
 use crate::{metric, CURRENT_FF_WEEK};
 
 impl<WR, AR, C> Application<WR, AR, C>
@@ -36,7 +36,10 @@ where
         let manager_option = options.get("manager");
         match options.get("week") {
             Some(week) => self.weekly_attendance(week, manager_option).await,
-            None=> self.individual_attendance(command_user, manager_option).await,
+            None => {
+                self.individual_attendance(command_user, manager_option)
+                    .await
+            }
         }
     }
 
@@ -57,19 +60,25 @@ where
                 vec![],
             ));
         }
-        let weekly_results = self.attendance_repo.week_attendance(week).await?;
+        let manager_id: Option<DiscordId> = match manager_option {
+            Some(manager) => Some(DiscordId::require_from_str(manager)?),
+            None => None,
+        };
+        let weekly_results = self
+            .attendance_repo
+            .week_attendance(week, &manager_id)
+            .await?;
 
         let mut embed = Embed::rich();
         let title = format!("Attendance for week {}", week);
         embed.title = Some(title);
-        let description = match manager_option {
-            Some(manager) => {
-                let manager_id = DiscordId::require_from_str(manager)?;
-                match did_user_attend(&manager_id, &weekly_results) {
-                    true => format!("{} attended\n", manager_id),
-                    false => format!("{} did not attend\n", manager_id),
-                }
-            }
+        // TODO: refactor the repo call, shouldn't need a nested match here
+        let description = match manager_id {
+            Some(manager_id) => match weekly_results.interested_owner {
+                Some(true) => format!("{} attended\n", manager_id),
+                Some(false) => format!("{} did not attend\n", manager_id),
+                None => "".to_string(),
+            },
             None => "".to_string(),
         };
         embed.description = Some(description);
@@ -96,12 +105,12 @@ where
         command_user: DiscordId,
         manager_option: Option<&String>,
     ) -> Result<InteractionResponse, Error> {
-        let (ephemeral,manager_id) = match manager_option {
+        let (ephemeral, manager_id) = match manager_option {
             Some(manager) => {
                 let manager_id = DiscordId::require_from_str(manager)?;
-                (false,manager_id)
+                (false, manager_id)
             }
-            None => (true,command_user),
+            None => (true, command_user),
         };
         let (overall_message, attendance) = match self
             .attendance_repo
@@ -111,7 +120,10 @@ where
         {
             Some((position, attendance)) => (build_response_messages(position), attendance),
             None => {
-                let content = format!("no attendance records found, is {} in the league?", manager_id);
+                let content = format!(
+                    "no attendance records found, is {} in the league?",
+                    manager_id
+                );
                 return Ok(InteractionResponse::channel_message_with_source_ephemeral(
                     &content,
                     vec![],
@@ -170,29 +182,6 @@ fn callback_data(embed: Embed, ephemeral: bool) -> MessageCallbackData {
         allowed_mentions: vec![],
         attachments: vec![],
     }
-}
-
-fn did_user_attend(user: &DiscordId, weekly_attendance: &WeeklyAttendanceRecord) -> bool {
-    for day in &weekly_attendance.attendance {
-        for attendee in &day.1 {
-            if user == attendee {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-#[test]
-fn test_did_user_attend() {
-    let weekly_attendance: WeeklyAttendanceRecord =
-        vec![("2023-11-27".to_string(), vec![DiscordId::from(1)])].into();
-
-    let lazy_user: DiscordId = 0.into();
-    assert_eq!(false, did_user_attend(&lazy_user, &weekly_attendance));
-
-    let motivated_user: DiscordId = 1.into();
-    assert_eq!(true, did_user_attend(&motivated_user, &weekly_attendance));
 }
 
 fn format_date(date: &str) -> String {

@@ -1,1 +1,0 @@
-V1__create_wager_table.sql

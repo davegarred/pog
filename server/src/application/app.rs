@@ -104,7 +104,6 @@ mod test {
 
     use crate::application::Application;
     use crate::discord_client::TestDiscordClient;
-    use crate::discord_id::DiscordId;
     use crate::repos::{
         AttendanceRecords, InMemWagerRepository, InMemoryAttendanceRepository, WagerRepository,
     };
@@ -454,17 +453,13 @@ mod test {
             (460972684986023937, 2, 4).into(),
             (885945439961108550, 0, 0).into(),
         ]);
-        let mut weekly_attendance: Vec<(String, Vec<DiscordId>)> = Vec::default();
-        weekly_attendance.push(("2023-11-23".to_string(), vec![695398918694895710.into()]));
+        let mut weekly_attendance: Vec<(String, Vec<String>)> = Vec::default();
+        weekly_attendance.push(("2023-11-23".to_string(), vec!["Dave".to_string()]));
         weekly_attendance.push((
             "2023-11-26".to_string(),
-            vec![
-                695398918694895710.into(),
-                1048049562960539648.into(),
-                431634941626023936.into(),
-            ],
+            vec!["Dave".to_string(), "Steve".to_string(), "Shawn".to_string()],
         ));
-        weekly_attendance.push(("2023-11-27".to_string(), vec![695398918694895710.into()]));
+        weekly_attendance.push(("2023-11-27".to_string(), vec!["Dave".to_string()]));
         let weekly_attendance = weekly_attendance.into();
         InMemoryAttendanceRepository {
             combined_attendance,

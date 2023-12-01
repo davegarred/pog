@@ -1,10 +1,15 @@
+use crate::discord_id::DiscordId;
 use crate::error::Error;
 use crate::repos::attendance_record::{AttendanceRecords, WeeklyAttendanceRecord};
 
 #[async_trait::async_trait]
 pub trait AttendanceRepository {
     async fn combined_attendance(&self) -> Result<AttendanceRecords, Error>;
-    async fn week_attendance(&self, week: u8) -> Result<WeeklyAttendanceRecord, Error>;
+    async fn week_attendance(
+        &self,
+        week: u8,
+        interested_owner: &Option<DiscordId>,
+    ) -> Result<WeeklyAttendanceRecord, Error>;
 }
 
 #[derive(Clone, Debug)]
@@ -30,7 +35,11 @@ impl AttendanceRepository for InMemoryAttendanceRepository {
         Ok(self.combined_attendance.clone())
     }
 
-    async fn week_attendance(&self, _week: u8) -> Result<WeeklyAttendanceRecord, Error> {
+    async fn week_attendance(
+        &self,
+        _week: u8,
+        _interested_owner: &Option<DiscordId>,
+    ) -> Result<WeeklyAttendanceRecord, Error> {
         Ok(self.weekly_attendance.clone())
     }
 }

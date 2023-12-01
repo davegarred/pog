@@ -1,3 +1,4 @@
+use crate::discord_id::DiscordId;
 use sqlx::{Pool, Postgres};
 
 use crate::error::Error;
@@ -19,13 +20,14 @@ ORDER BY weeks DESC, games DESC;
 "#;
 
 const WEEKLY_ATTENDANCE_QUERY: &str = r#"
-SELECT
-    attendance.date date,
-    teams.owner owner
-FROM ff_teams teams, ff_attendance attendance
+SELECT attendance.date  date,
+       teams.owner      owner,
+       teams.owner_name owner_name
+FROM ff_teams teams,
+     ff_attendance attendance
 WHERE teams.owner = attendance.owner
-    AND attendance.week = $1
-GROUP BY attendance.date, teams.owner
+  AND attendance.week = $1
+GROUP BY attendance.date, teams.owner, teams.owner_name
 ORDER BY date;
 "#;
 
@@ -53,12 +55,19 @@ impl AttendanceRepository for PostgresAttendanceRepository {
         Ok(AttendanceRecords(result))
     }
 
-    async fn week_attendance(&self, week: u8) -> Result<WeeklyAttendanceRecord, Error> {
+    async fn week_attendance(
+        &self,
+        week: u8,
+        interested_owner: &Option<DiscordId>,
+    ) -> Result<WeeklyAttendanceRecord, Error> {
         let results = sqlx::query(WEEKLY_ATTENDANCE_QUERY)
             .bind(week as i32)
             .fetch_all(&self.pool)
             .await?;
-        Ok(results.into())
+        Ok(WeeklyAttendanceRecord::from_query_result(
+            interested_owner,
+            results,
+        ))
     }
 }
 
@@ -78,13 +87,13 @@ mod test {
         let db_pool = new_db_pool("postgresql://pog_user:pog_pass@127.0.0.1:5432/pog_server").await;
         let repo = PostgresAttendanceRepository::new(db_pool);
 
-        let result = repo.week_attendance(1).await.unwrap();
+        let result = repo.week_attendance(1, &None).await.unwrap();
         assert_eq!(3, result.attendance.len());
 
-        let result = repo.week_attendance(2).await.unwrap();
+        let result = repo.week_attendance(2, &None).await.unwrap();
         assert_eq!(1, result.attendance.len());
 
-        let result = repo.week_attendance(5).await.unwrap();
+        let result = repo.week_attendance(5, &None).await.unwrap();
         assert_eq!(2, result.attendance.len());
     }
 }
