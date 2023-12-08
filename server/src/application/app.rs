@@ -135,7 +135,7 @@ mod test {
         let result = app.request_handler(request).await.unwrap();
 
         let found = serde_json::to_string(&result).unwrap();
-        let mut expected = r#"{"type":9,"data":{"custom_id":"1050119194533961860|Cisco","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10,"required":true}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"Jets beat the Chargers outright","style":2,"min_length":3,"max_length":100,"required":true}]},{"type":1,"components":[{"type":4,"custom_id":"settlement","label":"When will this bet settle?","placeholder":""#.to_string();
+        let mut expected = r#"{"type":9,"data":{"custom_id":"1050119194533961860|Cisco","title":"Place a bet","components":[{"type":1,"components":[{"type":4,"custom_id":"wager","label":"How much are we wagering?","placeholder":"$20","style":1,"min_length":2,"max_length":10,"required":true}]},{"type":1,"components":[{"type":4,"custom_id":"outcome","label":"What is the bet on?","placeholder":"49ers roll the Seahawks again","style":2,"min_length":3,"max_length":100,"required":true}]},{"type":1,"components":[{"type":4,"custom_id":"settlement","label":"When will this bet settle?","placeholder":""#.to_string();
         expected += Local::now().format("%m/%d").to_string().as_str();
         expected += r#"","style":1,"min_length":3,"max_length":10,"required":false}]}]}}"#;
         assert_eq!(found, expected);
@@ -408,7 +408,7 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 12","type":"rich","description":"<@695398918694895710>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 10 of 12 weeks","inline":false},{"name":"Game attendance","value":"Attended 30 games","inline":false}]}],"flags":64}}"#
+            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 13","type":"rich","description":"<@695398918694895710>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 10 of 13 weeks","inline":false},{"name":"Game attendance","value":"Attended 30 games","inline":false}]}],"flags":64}}"#
         );
     }
 
@@ -426,7 +426,7 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 12","type":"rich","description":"<@1050119194533961860>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 7 of 12 weeks","inline":false},{"name":"Game attendance","value":"Attended 14 games","inline":false}]}]}}"#
+            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 13","type":"rich","description":"<@1050119194533961860>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 7 of 13 weeks","inline":false},{"name":"Game attendance","value":"Attended 14 games","inline":false}]}]}}"#
         );
     }
 
