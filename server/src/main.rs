@@ -31,8 +31,8 @@ use once_cell::sync::OnceCell;
 
 pub static POG_METRIC: OnceCell<Arc<Mutex<Metrics>>> = OnceCell::new();
 
-pub const ADD_BET_PLACEHOLDER_TEXT: &str = "49ers roll the Seahawks again";
-pub const CURRENT_FF_WEEK: u8 = 15;
+pub const ADD_BET_PLACEHOLDER_TEXT: &str = "Raiders make the playoffs";
+pub const CURRENT_FF_WEEK: u8 = 16;
 
 pub fn metric(f: impl Fn(MutexGuard<Metrics>)) {
     let pog_metric = match POG_METRIC.get() {
