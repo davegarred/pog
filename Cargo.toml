@@ -6,6 +6,7 @@ members = [
     "common",
     "commands",
     "discord_api",
+    "gateway",
 ]
 
 [patch.crates-io]

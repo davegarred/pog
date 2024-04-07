@@ -1,0 +1,82 @@
+{
+  "t": "MESSAGE_UPDATE",
+  "s": 8,
+  "op": 0,
+  "d": {
+    "type": 0,
+    "tts": false,
+    "timestamp": "2024-03-25T02:56:13.538000+00:00",
+    "pinned": false,
+    "mentions": [],
+    "mention_roles": [],
+    "mention_everyone": false,
+    "member": {
+      "roles": [],
+      "premium_since": null,
+      "pending": false,
+      "nick": null,
+      "mute": false,
+      "joined_at": "2023-05-25T03:42:10.505000+00:00",
+      "flags": 0,
+      "deaf": false,
+      "communication_disabled_until": null,
+      "avatar": null
+    },
+    "id": "1221653843570331648",
+    "flags": 0,
+    "embeds": [],
+    "edited_timestamp": "2024-03-25T02:56:26.376264+00:00",
+    "content": "Moving the previous post to the right channel. I’ve got some stuff to give away!",
+    "components": [],
+    "channel_id": "1102316495100457010",
+    "author": {
+      "username": "ingae8641",
+      "public_flags": 0,
+      "premium_type": 0,
+      "id": "745792133801181345",
+      "global_name": "ingae",
+      "discriminator": "0",
+      "avatar_decoration_data": null,
+      "avatar": null
+    },
+    "attachments": [
+      {
+        "width": 3024,
+        "url": "https://cdn.discordapp.com/attachments/1102316495100457010/1221653841435426946/IMG_5783.jpg?ex=66135ccd&is=6600e7cd&hm=df98d2304b6e7e58a8661b24a711c147dd721730167cf295ec4133a29e2d7ac1&",
+        "size": 3408158,
+        "proxy_url": "https://media.discordapp.net/attachments/1102316495100457010/1221653841435426946/IMG_5783.jpg?ex=66135ccd&is=6600e7cd&hm=df98d2304b6e7e58a8661b24a711c147dd721730167cf295ec4133a29e2d7ac1&",
+        "placeholder_version": 1,
+        "placeholder": "nOgJFQIIeYuVOLdYh5pmWfjEXGBE",
+        "id": "1221653841435426946",
+        "height": 4032,
+        "filename": "IMG_5783.jpg",
+        "content_type": "image/jpeg"
+      },
+      {
+        "width": 4032,
+        "url": "https://cdn.discordapp.com/attachments/1102316495100457010/1221653842437869628/IMG_5782.jpg?ex=66135ccd&is=6600e7cd&hm=7b65e4e81b32902f9da0e294d647dd5de61de086dfabcba14fa38ae7a4e581e9&",
+        "size": 2013302,
+        "proxy_url": "https://media.discordapp.net/attachments/1102316495100457010/1221653842437869628/IMG_5782.jpg?ex=66135ccd&is=6600e7cd&hm=7b65e4e81b32902f9da0e294d647dd5de61de086dfabcba14fa38ae7a4e581e9&",
+        "placeholder_version": 1,
+        "placeholder": "HfgFHYL2qMmPxJdqWamWRqdfiPZW",
+        "id": "1221653842437869628",
+        "height": 3024,
+        "filename": "IMG_5782.jpg",
+        "content_type": "image/jpeg"
+      },
+      {
+        "width": 3024,
+        "url": "https://cdn.discordapp.com/attachments/1102316495100457010/1221653843151032420/IMG_5781.jpg?ex=66135ccd&is=6600e7cd&hm=9782f721856faf4609491ac90fb24bbae801edb6df6565fee59050a008301fde&",
+        "size": 2404830,
+        "proxy_url": "https://media.discordapp.net/attachments/1102316495100457010/1221653843151032420/IMG_5781.jpg?ex=66135ccd&is=6600e7cd&hm=9782f721856faf4609491ac90fb24bbae801edb6df6565fee59050a008301fde&",
+        "placeholder_version": 1,
+        "placeholder": "3fcJDQKAhnuF2Gp4i4ppZ3evWXf5",
+        "id": "1221653843151032420",
+        "height": 4032,
+        "filename": "IMG_5781.jpg",
+        "content_type": "image/jpeg"
+      }
+    ],
+    "guild_id": "1045748882879029329"
+  }
+}

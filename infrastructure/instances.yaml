@@ -1,4 +1,4 @@
-Description: Deploys the Lambdas for pog
+Description: Deploys the Lambda and EC2 instances for pog
 Parameters:
   Environment:
     Description: A designation for this environment, e.g., 'prod'
@@ -41,6 +41,20 @@ Parameters:
   DiscordApplicationToken:
     Description: Discord application auth token
     Type: String
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64'
+  Ec2IamInstanceProfile:
+    Description: IAM instance profile for use with the gateway EC2 instance (requires S3 read and lambda:InvokeFunction)
+    Type: String
+  #  TODO: move to secret manager
+  GeminiToken:
+    Description: Gemini API token
+    Type: String
+#  PogClientLambda:
+#    Description: Name of the Pog client lambda
+#    Type: String
+#    Ref: !Join [ '-', [ !Ref "AWS::StackName", "client" ] ]
 
 Resources:
   ServerLambdaRole:
@@ -182,6 +196,76 @@ Resources:
       AuthType: NONE
       InvokeMode: BUFFERED
       TargetFunctionArn: !Ref ServerLambda
+
+  GatewayTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Join [ '-', [ !Ref "AWS::StackName", "gateway" ] ]
+      LaunchTemplateData:
+        ImageId: !Ref LatestAmiId
+        InstanceType: t3.micro
+        IamInstanceProfile:
+          Name: !Ref Ec2IamInstanceProfile
+        KeyName: pog-gateway-test
+        MetadataOptions:
+          HttpTokens: optional
+        UserData:
+          Fn::Base64:
+            !Sub
+              - |
+                #!/bin/bash
+                sudo yum update -y
+                
+                aws s3 cp s3://${S3Bucket}/pog/${Environment}/gateway /home/ec2-user/gateway
+                chown ec2-user:ec2-user /home/ec2-user/gateway
+                chmod 744 /home/ec2-user/gateway
+                
+                cat << SERVICE > /etc/systemd/system/gateway.service
+                [Unit]
+                Description=POG gateway service (demo)
+                After=network.target
+                StartLimitIntervalSec=0
+                
+                [Service]
+                Type=simple
+                Restart=always
+                RestartSec=1
+                User=ec2-user
+                ExecStart=/home/ec2-user/gateway
+                StandardOutput=append:/home/ec2-user/data.log
+                StandardError=append:/home/ec2-user/error.log
+                Environment="DISCORD_APPLICATION_ID=${DiscordApplicationId}"
+                Environment="APPLICATION_TOKEN=${DiscordApplicationToken}"
+                Environment="GEMINI_TOKEN=${GeminiToken}"
+                Environment="CLIENT_LAMBDA=${PogClientLambda}"
+                Environment="ENVIRONMENT=${Environment}"
+                
+                [Install]
+                WantedBy=multi-user.target
+                SERVICE
+                
+                sudo chmod 777 /etc/systemd/system/gateway.service
+                systemctl start gateway
+                systemctl enable gateway
+              - PogClientLambda: !Join [ '-', [ !Ref "AWS::StackName", "client" ] ]
+        SecurityGroupIds:
+          - sg-0946f92ca0f5d71c5
+  GatewayAutoscaler:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref GatewayTemplate
+        Version: !GetAtt GatewayTemplate.LatestVersionNumber
+      MaxSize: '1'
+      MinSize: '1'
+      AvailabilityZones:
+        - us-west-2a
+        - us-west-2b
+      #      VPCZoneIdentifier: !Ref Subnets
+      Tags:
+        - Key: "Name"
+          Value: !Join [ '-', [ !Ref "AWS::StackName", "gateway" ] ]
+          PropagateAtLaunch: true
 
 Outputs:
   ServerFunctionUrl:

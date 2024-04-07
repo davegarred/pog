@@ -13,9 +13,17 @@ prepare:
 	rustup target add  x86_64-unknown-linux-musl
 	sudo apt install musl-tools
 
-build:
+test:
+	cargo test
+
+check:
+	cargo audit
+	cargo clippy
+
+build: test
 	cargo build --target x86_64-unknown-linux-musl --release --bin pog
 	cargo build --target x86_64-unknown-linux-musl --release --bin pog_client
+	cargo build --release --bin gateway
 	cargo build --release --bin commands
 
 deploy: check-env build
@@ -25,6 +33,7 @@ deploy: check-env build
 	cp target/x86_64-unknown-linux-musl/release/pog_client bootstrap
 	zip bootstrap.zip bootstrap
 	aws s3 cp bootstrap.zip s3://$(POG_BUCKET)/client/bootstrap.zip
+	aws s3 cp target/release/gateway s3://$(POG_BUCKET)/gateway
 
 check-env:
 ifndef POG_BUCKET

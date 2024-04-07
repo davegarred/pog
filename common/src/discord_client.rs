@@ -1,7 +1,5 @@
-use crate::Authorization;
+use crate::{Authorization, DISCORD_API_ROOT};
 use reqwest::header::HeaderMap;
-
-const DISCORD_API_ROOT: &str = "https://discord.com/api/v10";
 
 pub fn discord_api_root() -> String {
     DISCORD_API_ROOT.to_string()

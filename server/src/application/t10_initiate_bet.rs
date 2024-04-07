@@ -25,7 +25,7 @@ where
         let _timer = Timer::new("t10_initiate_bet_time");
         metric(|mut m| m.count("t10_initiate_bet"));
 
-        let option = match data.options.get(0) {
+        let option = match data.options.first() {
             Some(option) => option,
             None => return Err("bet command sent with empty options".into()),
         };

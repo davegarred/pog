@@ -2,8 +2,31 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DiscordMessage {
+    Create(CreateMessage),
     Update(UpdateMessage),
     Delete(DeleteMessage),
+    TlDr(TlDrMessage),
+}
+
+// https://discord.com/developers/docs/resources/channel#create-message
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CreateMessage {
+    pub authorization: Authorization,
+    pub channel_id: String,
+    pub message: String,
+    pub message_reference: Option<MessageReference>,
+}
+
+// https://discord.com/developers/docs/resources/channel#message-reference-object-message-reference-structure
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MessageReference {
+    pub message_id: String,
+}
+
+impl CreateMessage {
+    pub fn url(&self) -> String {
+        create_message_url(self.channel_id.as_str())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -33,6 +56,16 @@ impl UpdateMessage {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TlDrMessage {
+    pub authorization: Authorization,
+    pub original_message_id: String,
+    pub channel_id: String,
+    pub gemini_key: String,
+    pub author: String,
+    pub message: String,
+}
+
 fn modify_message_url(
     authorization: &Authorization,
     request_token: &str,
@@ -42,6 +75,10 @@ fn modify_message_url(
         "https://discord.com/api/v10/webhooks/{}/{}/messages/{}",
         authorization.application_id, request_token, message_id
     )
+}
+
+fn create_message_url(channel_id: &str) -> String {
+    format!("https://discord.com/api/v10/channels/{channel_id}/messages")
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -22,7 +22,7 @@ where
         let _timer = Timer::new("t20_list_bets_time");
         metric(|mut m| m.count("t20_list_bets"));
 
-        let option = match data.options.get(0) {
+        let option = match data.options.first() {
             Some(option) => option,
             None => return Err("bet command sent with empty options".into()),
         };

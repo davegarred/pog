@@ -15,11 +15,11 @@ pub fn parse_date(value: &str) -> Option<NaiveDate> {
     try_guessing_year(value, Utc::now().date_naive())
 }
 fn try_guessing_year(value: &str, today: NaiveDate) -> Option<NaiveDate> {
-    let value_with_year = format!("{}/{}", value, Utc::now().year());
+    let value_with_year = format!("{}/{}", value, today.year());
     match NaiveDate::parse_from_str(value_with_year.as_str(), "%m/%d/%Y") {
         Ok(date) => {
             let delta = date - today;
-            if delta < Duration::zero() {
+            if delta > Duration::zero() {
                 Some(date)
             } else {
                 Some(date + chrono::Months::new(12))
@@ -35,30 +35,33 @@ fn try_guessing_year(value: &str, today: NaiveDate) -> Option<NaiveDate> {
 #[test]
 fn test_date() {
     assert_eq!(
-        NaiveDate::from_ymd_opt(2023, 11, 24),
-        parse_date("11/24/2023")
+        NaiveDate::from_ymd_opt(2024, 11, 24),
+        parse_date("11/24/2024")
     );
-    assert_eq!(NaiveDate::from_ymd_opt(2023, 11, 24), parse_date("11/24"));
-}
-
-#[test]
-fn test_guessing_date() {
-    let today: NaiveDate = "2023-11-24".parse().unwrap();
     assert_eq!(
-        NaiveDate::from_ymd_opt(2023, 11, 23),
-        try_guessing_year("11/23", today)
+        NaiveDate::from_ymd_opt(2024, 11, 24),
+        parse_date("11/24/2024")
     );
 }
 
 #[test]
 fn test_guessing_date_wrong_year() {
-    let today: NaiveDate = "2023-11-24".parse().unwrap();
+    let today: NaiveDate = "2023-11-23".parse().unwrap();
     assert_eq!(
-        NaiveDate::from_ymd_opt(2024, 11, 24),
+        NaiveDate::from_ymd_opt(2024, 11, 23),
+        try_guessing_year("11/23", today)
+    );
+}
+
+#[test]
+fn test_guessing_date() {
+    let today: NaiveDate = "2023-11-23".parse().unwrap();
+    assert_eq!(
+        NaiveDate::from_ymd_opt(2023, 11, 24),
         try_guessing_year("11/24", today)
     );
     assert_eq!(
-        NaiveDate::from_ymd_opt(2024, 11, 25),
+        NaiveDate::from_ymd_opt(2023, 11, 25),
         try_guessing_year("11/25", today)
     );
 }

@@ -1,0 +1,50 @@
+{
+  "t": "READY",
+  "s": 1,
+  "op": 0,
+  "d": {
+    "v": 10,
+    "user_settings": {},
+    "user": {
+      "verified": true,
+      "username": "people-of-greenwood-test",
+      "public_flags": 524288,
+      "mfa_enabled": false,
+      "id": "1166787343743725609",
+      "global_name": null,
+      "flags": 524288,
+      "email": null,
+      "discriminator": "9132",
+      "bot": true,
+      "avatar": null
+    },
+    "session_type": "normal",
+    "session_id": "2e949f84eb383e88ce5fcf8d2b21bebe",
+    "resume_gateway_url": "wss://gateway-us-east1-c.discord.gg",
+    "relationships": [],
+    "private_channels": [],
+    "presences": [],
+    "guilds": [
+      {
+        "unavailable": true,
+        "id": "1150922826463846521"
+      }
+    ],
+    "guild_join_requests": [],
+    "geo_ordered_rtc_regions": [
+      "seattle",
+      "santa-clara",
+      "us-west",
+      "us-south",
+      "us-central"
+    ],
+    "auth": {},
+    "application": {
+      "id": "1166787343743725609",
+      "flags": 8388608
+    },
+    "_trace": [
+      "[\"gateway-prd-us-east1-c-lp8l\",{\"micros\":146031,\"calls\":[\"id_created\",{\"micros\":1909,\"calls\":[]},\"session_lookup_time\",{\"micros\":5131,\"calls\":[]},\"session_lookup_finished\",{\"micros\":14,\"calls\":[]},\"discord-sessions-prd-2-164\",{\"micros\":138270,\"calls\":[\"start_session\",{\"micros\":122219,\"calls\":[\"discord-api-7468d874bb-cwvx8\",{\"micros\":113928,\"calls\":[\"get_user\",{\"micros\":25216},\"get_guilds\",{\"micros\":5663},\"send_scheduled_deletion_message\",{\"micros\":8},\"guild_join_requests\",{\"micros\":12808},\"authorized_ip_coro\",{\"micros\":9}]}]},\"starting_guild_connect\",{\"micros\":90,\"calls\":[]},\"presence_started\",{\"micros\":444,\"calls\":[]},\"guilds_started\",{\"micros\":106,\"calls\":[]},\"guilds_connect\",{\"micros\":2,\"calls\":[]},\"presence_connect\",{\"micros\":15359,\"calls\":[]},\"connect_finished\",{\"micros\":15365,\"calls\":[]},\"build_ready\",{\"micros\":17,\"calls\":[]},\"clean_ready\",{\"micros\":1,\"calls\":[]},\"optimize_ready\",{\"micros\":24,\"calls\":[]},\"split_ready\",{\"micros\":0,\"calls\":[]}]}]}]"
+    ]
+  }
+}

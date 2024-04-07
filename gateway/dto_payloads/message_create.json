@@ -1,0 +1,47 @@
+{
+  "t": "MESSAGE_CREATE",
+  "s": 6,
+  "op": 0,
+  "d": {
+    "type": 0,
+    "tts": false,
+    "timestamp": "2024-03-24T18:32:53.512000+00:00",
+    "referenced_message": null,
+    "pinned": false,
+    "nonce": "1221527174838747136",
+    "mentions": [],
+    "mention_roles": [],
+    "mention_everyone": false,
+    "member": {
+      "roles": [],
+      "premium_since": null,
+      "pending": false,
+      "nick": null,
+      "mute": false,
+      "joined_at": "2022-12-07T18:40:08.214000+00:00",
+      "flags": 0,
+      "deaf": false,
+      "communication_disabled_until": null,
+      "avatar": null
+    },
+    "id": "1221527175480479834",
+    "flags": 0,
+    "embeds": [],
+    "edited_timestamp": null,
+    "content": "Yup, be there by tip off for the JMU/Duke game",
+    "components": [],
+    "channel_id": "1052046029891051600",
+    "author": {
+      "username": "cisco.206",
+      "public_flags": 0,
+      "premium_type": 3,
+      "id": "1050119194533961860",
+      "global_name": "Cisco",
+      "discriminator": "0",
+      "avatar_decoration_data": null,
+      "avatar": "baac22895ebb0bcf9de2b3848b2b1c24"
+    },
+    "attachments": [],
+    "guild_id": "1045748882879029329"
+  }
+}

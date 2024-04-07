@@ -1,0 +1,41 @@
+{
+  "t": "MESSAGE_REACTION_ADD",
+  "s": 2,
+  "op": 0,
+  "d": {
+    "user_id": "348912925609820162",
+    "type": 0,
+    "message_id": "1221508236080058555",
+    "message_author_id": "1045795671489380354",
+    "member": {
+      "user": {
+        "username": "downwitda",
+        "public_flags": 0,
+        "id": "348912925609820162",
+        "global_name": "Downwitda",
+        "display_name": "Downwitda",
+        "discriminator": "0",
+        "bot": false,
+        "avatar_decoration_data": null,
+        "avatar": "5a3648df56e4a577ded0a36dd6451173"
+      },
+      "roles": [],
+      "premium_since": null,
+      "pending": false,
+      "nick": "Josh/DiaB",
+      "mute": false,
+      "joined_at": "2023-07-04T22:31:14.439000+00:00",
+      "flags": 0,
+      "deaf": false,
+      "communication_disabled_until": null,
+      "avatar": null
+    },
+    "emoji": {
+      "name": "👍",
+      "id": null
+    },
+    "channel_id": "1052046029891051600",
+    "burst": false,
+    "guild_id": "1045748882879029329"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "t": "RESUMED",
+  "s": 2,
+  "op": 0,
+  "d": {
+    "_trace": [
+      "[\"discord-sessions-prd-2-122\",{\"micros\":28}]"
+    ]
+  }
+}

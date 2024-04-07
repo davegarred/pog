@@ -57,7 +57,7 @@ impl InteractionDataPayload {
                 name,
                 interaction_type,
                 resolved: self.resolved.clone(),
-                options: self.options.clone().unwrap_or(Vec::new()),
+                options: self.options.clone().unwrap_or_default(),
                 guild_id: self.guild_id.clone(),
                 target_id: self.target_id.clone(),
             },
@@ -74,7 +74,7 @@ impl InteractionDataPayload {
         Ok(InteractionData::Message(MessageComponentInteractionData {
             custom_id,
             component_type,
-            values: self.values.clone().unwrap_or(Vec::new()),
+            values: self.values.clone().unwrap_or_default(),
             resolved: self.resolved.clone(),
         }))
     }
@@ -85,7 +85,7 @@ impl InteractionDataPayload {
             .ok_or::<InteractionError>(("InteractionData", "custom_id").into())?;
         Ok(InteractionData::ModalSubmit(ModalSubmitInteractionData {
             custom_id,
-            components: self.components.clone().unwrap_or(Vec::new()),
+            components: self.components.clone().unwrap_or_default(),
         }))
     }
 }

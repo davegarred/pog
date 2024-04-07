@@ -24,7 +24,7 @@ where
         let _timer = Timer::new("t31_bet_selected_time");
         metric(|mut m| m.count("t31_bet_selected"));
 
-        let wager_id = match data.values.get(0) {
+        let wager_id = match data.values.first() {
             Some(wager_id) => wager_id,
             None => return Err("missing response to bet closing reason selection".into()),
         };

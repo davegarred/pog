@@ -53,7 +53,7 @@ impl Wager {
 
     fn settlement_tail(&self) -> String {
         match (self.expected_settle_date, self.status) {
-            (Some(date), WagerStatus::Open) => format!(" (settles: {})", date.format("%b %e")),
+            (Some(date), WagerStatus::Open) => format!(" (settles: {})", date.format("%b %e, %Y")),
             _ => "".to_string(),
         }
     }
@@ -115,7 +115,7 @@ fn test_format() {
     };
     assert_eq!(
         wager.to_string(),
-        "<@1234567890> vs Woody, wager: $20 - Cowboys over the Raiders (settles: May  5)"
+        "<@1234567890> vs Woody, wager: $20 - Cowboys over the Raiders (settles: May  5, 2024)"
     );
 }
 
