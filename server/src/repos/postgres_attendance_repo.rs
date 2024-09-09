@@ -11,9 +11,10 @@ SELECT ow.owner    owner,
        sum(games::int)  games
 FROM (SELECT teams.owner owner,
              fa.week     week,
-             count(week)    games
+             count(week) games
       FROM ff_teams teams
                FULL OUTER JOIN ff_attendance fa on teams.owner = fa.owner
+      WHERE season = '2024'
       GROUP BY teams.owner, fa.week) ow
 GROUP BY ow.owner
 ORDER BY weeks DESC, games DESC;
@@ -27,6 +28,7 @@ FROM ff_teams teams,
      ff_attendance attendance
 WHERE teams.owner = attendance.owner
   AND attendance.week = $1
+  AND season = '2024'
 GROUP BY attendance.date, teams.owner, teams.owner_name
 ORDER BY date;
 "#;
