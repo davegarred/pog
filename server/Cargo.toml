@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 pog_common = "0.1.0"
+telemetry = "0.1.0"
 discord_api = "0.1.0"
 
 aws-config = "1.1.9"

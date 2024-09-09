@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use aws_config::BehaviorVersion;
 use aws_sdk_lambda::primitives::Blob;
 use aws_sdk_lambda::types::InvocationType;
 use pog_common::{Authorization, DeleteMessage, DiscordMessage};
@@ -20,7 +21,7 @@ impl DefaultDiscordClient {
         application_token: String,
         client_function_name: String,
     ) -> Self {
-        let config = aws_config::load_from_env().await;
+        let config = aws_config::load_defaults(BehaviorVersion::latest()).await;
         let client = aws_sdk_lambda::Client::new(&config);
         let authorization = Authorization {
             application_id,

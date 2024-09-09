@@ -3,7 +3,6 @@ use rand::Rng;
 pub fn random_snark(author: &str) -> String {
     let mut rng = rand::thread_rng();
     let key = rng.gen_range(0..=60);
-    println!("key={}", key);
     snark(key, author)
 }
 

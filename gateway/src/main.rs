@@ -15,7 +15,7 @@ mod inbound_payloads;
 mod message_processor;
 mod payloads;
 
-const TLDR_MESSAGE_LENGTH: usize = 380;
+const TLDR_MESSAGE_LENGTH: usize = 700;
 
 #[tokio::main]
 async fn main() {

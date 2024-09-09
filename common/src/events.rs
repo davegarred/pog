@@ -21,6 +21,7 @@ pub struct CreateMessage {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MessageReference {
     pub message_id: String,
+    pub channel_id: String,
 }
 
 impl CreateMessage {
