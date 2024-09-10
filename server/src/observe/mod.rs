@@ -1,7 +1,7 @@
-use std::sync::MutexGuard;
-pub use metric::Metrics;
-pub use timer::Timer;
 use crate::POG_METRIC;
+pub use metric::Metrics;
+use std::sync::MutexGuard;
+pub use timer::Timer;
 
 pub mod emf;
 pub mod metric;

@@ -51,10 +51,6 @@ Parameters:
   GeminiToken:
     Description: Gemini API token
     Type: String
-#  PogClientLambda:
-#    Description: Name of the Pog client lambda
-#    Type: String
-#    Ref: !Join [ '-', [ !Ref "AWS::StackName", "client" ] ]
 
 Resources:
   ServerLambdaRole:

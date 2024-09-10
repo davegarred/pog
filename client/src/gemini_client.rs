@@ -25,7 +25,9 @@ fn headers() -> HeaderMap {
     let mut headers = HeaderMap::new();
     headers.insert(
         "Content-Type",
-        "application/json; charset=UTF-8".parse().expect("add content-type header"),
+        "application/json; charset=UTF-8"
+            .parse()
+            .expect("add content-type header"),
     );
     headers
 }

@@ -408,7 +408,7 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 18","type":"rich","description":"<@695398918694895710>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 10 of 18 weeks","inline":false},{"name":"Game attendance","value":"Attended 30 games","inline":false}]}],"flags":64}}"#
+            "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"Attendance through week 1\",\"type\":\"rich\",\"description\":\"<@695398918694895710>\\nRanks in the top quarter, outstanding attendance!\\n🤩\",\"fields\":[{\"name\":\"Weekly attendance\",\"value\":\"Attended 10 of 1 weeks\",\"inline\":false},{\"name\":\"Game attendance\",\"value\":\"Attended 30 games\",\"inline\":false}]}],\"flags\":64}}"
         );
     }
 
@@ -426,7 +426,43 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r#"{"type":4,"data":{"embeds":[{"title":"Attendance through week 18","type":"rich","description":"<@1050119194533961860>\nRanks in the top quarter, outstanding attendance!\n🤩","fields":[{"name":"Weekly attendance","value":"Attended 7 of 18 weeks","inline":false},{"name":"Game attendance","value":"Attended 14 games","inline":false}]}]}}"#
+            "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"Attendance through week 1\",\"type\":\"rich\",\"description\":\"<@1050119194533961860>\\nRanks in the top quarter, outstanding attendance!\\n🤩\",\"fields\":[{\"name\":\"Weekly attendance\",\"value\":\"Attended 7 of 1 weeks\",\"inline\":false},{\"name\":\"Game attendance\",\"value\":\"Attended 14 games\",\"inline\":false}]}]}}"
+        );
+    }
+
+    #[tokio::test]
+    async fn t40_attendance_week() {
+        let request = expect_request_from("dto_payloads/T40_attendance_week.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            test_attendance_repo(),
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            found,
+            "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"Attendance for week 1\",\"type\":\"rich\",\"description\":\"\",\"fields\":[{\"name\":\"Thu, Nov 23\",\"value\":\"Dave\",\"inline\":false},{\"name\":\"Sun, Nov 26\",\"value\":\"Dave, Steve, Shawn\",\"inline\":false},{\"name\":\"Mon, Nov 27\",\"value\":\"Dave\",\"inline\":false}]}],\"flags\":64}}"
+        );
+    }
+
+    #[tokio::test]
+    async fn t40_attendance_week_not_yet_arrived() {
+        let request = expect_request_from("dto_payloads/T40_attendance_week_19.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            test_attendance_repo(),
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            found,
+            "{\"type\":4,\"data\":{\"content\":\"No information for week 19\",\"flags\":64}}"
         );
     }
 
