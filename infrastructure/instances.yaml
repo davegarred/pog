@@ -265,5 +265,5 @@ Resources:
 
 Outputs:
   ServerFunctionUrl:
-    Description: Server function url
-    Value: !GetAtt ServerFunctionUrl.FunctionUrl
+    Description: Interactions endpoint url
+    Value: !Join [ '-', [ !GetAtt "ServerFunctionUrl.FunctionUrl", "interactions" ] ]
