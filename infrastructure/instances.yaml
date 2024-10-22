@@ -266,4 +266,4 @@ Resources:
 Outputs:
   ServerFunctionUrl:
     Description: Interactions endpoint url
-    Value: !Join [ '-', [ !GetAtt "ServerFunctionUrl.FunctionUrl", "interactions" ] ]
+    Value: !Join [ '', [ !GetAtt "ServerFunctionUrl.FunctionUrl", "interactions" ] ]
