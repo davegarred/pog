@@ -23,7 +23,7 @@ check:
 build: test
 	cargo build --target x86_64-unknown-linux-musl --release --bin pog
 	cargo build --target x86_64-unknown-linux-musl --release --bin pog_client
-	cargo build --release --bin gateway
+	cargo build --target x86_64-unknown-linux-musl --release --bin gateway
 	cargo build --release --bin commands
 
 deploy: check-env build
