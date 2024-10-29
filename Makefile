@@ -34,6 +34,7 @@ deploy: check-env build
 	zip bootstrap.zip bootstrap
 	aws s3 cp bootstrap.zip s3://$(POG_BUCKET)/client/bootstrap.zip
 	aws s3 cp target/release/gateway s3://$(POG_BUCKET)/gateway
+	echo "deployed code to POG_BUCKET=$(POG_BUCKET)"
 
 check-env:
 ifndef POG_BUCKET
