@@ -408,7 +408,7 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"Attendance through week 11\",\"type\":\"rich\",\"description\":\"<@695398918694895710>\\nRanks in the top quarter, outstanding attendance!\\n🤩\",\"fields\":[{\"name\":\"Weekly attendance\",\"value\":\"Attended 10 of 11 weeks\",\"inline\":false},{\"name\":\"Game attendance\",\"value\":\"Attended 30 games\",\"inline\":false}]}],\"flags\":64}}"
+            "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"Attendance through week 12\",\"type\":\"rich\",\"description\":\"<@695398918694895710>\\nRanks in the top quarter, outstanding attendance!\\n🤩\",\"fields\":[{\"name\":\"Weekly attendance\",\"value\":\"Attended 10 of 12 weeks\",\"inline\":false},{\"name\":\"Game attendance\",\"value\":\"Attended 30 games\",\"inline\":false}]}],\"flags\":64}}"
         );
     }
 
@@ -426,7 +426,7 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"Attendance through week 11\",\"type\":\"rich\",\"description\":\"<@1050119194533961860>\\nRanks in the top quarter, outstanding attendance!\\n🤩\",\"fields\":[{\"name\":\"Weekly attendance\",\"value\":\"Attended 7 of 11 weeks\",\"inline\":false},{\"name\":\"Game attendance\",\"value\":\"Attended 14 games\",\"inline\":false}]}]}}"
+            "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"Attendance through week 12\",\"type\":\"rich\",\"description\":\"<@1050119194533961860>\\nRanks in the top quarter, outstanding attendance!\\n🤩\",\"fields\":[{\"name\":\"Weekly attendance\",\"value\":\"Attended 7 of 12 weeks\",\"inline\":false},{\"name\":\"Game attendance\",\"value\":\"Attended 14 games\",\"inline\":false}]}]}}"
         );
     }
 
