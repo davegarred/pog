@@ -1,7 +1,7 @@
 use crate::discord_client::DiscordClient;
 use futures_channel::mpsc::UnboundedSender;
 use tokio_tungstenite::tungstenite::{Error, Message};
-
+use crate::error::Error::ClientFailure;
 use crate::heartbeat::WebsocketUpdate;
 use crate::inbound_payloads::{InboundEvent, InboundPayload};
 use crate::payloads::DiscordGatewayResponse;
@@ -89,7 +89,7 @@ impl<T: DiscordClient> MessageProcessor<T> {
                                     .await
                                 {
                                     Ok(_) => {}
-                                    Err(err) => println!("failed to call client tldr: {:?}", err),
+                                    Err(ClientFailure(message)) => println!("failed to call client tldr: {:?}", message),
                                 }
                             } else {
                                 println!("{}", message_create.content.len());
