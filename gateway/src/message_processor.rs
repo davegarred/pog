@@ -1,11 +1,11 @@
 use crate::discord_client::DiscordClient;
-use futures_channel::mpsc::UnboundedSender;
-use tokio_tungstenite::tungstenite::{Error, Message};
 use crate::error::Error::ClientFailure;
 use crate::heartbeat::WebsocketUpdate;
 use crate::inbound_payloads::{InboundEvent, InboundPayload};
 use crate::payloads::DiscordGatewayResponse;
 use crate::TLDR_MESSAGE_LENGTH;
+use futures_channel::mpsc::UnboundedSender;
+use tokio_tungstenite::tungstenite::{Error, Message};
 
 pub struct MessageProcessor<T: DiscordClient> {
     resume_gateway: String,
@@ -89,7 +89,9 @@ impl<T: DiscordClient> MessageProcessor<T> {
                                     .await
                                 {
                                     Ok(_) => {}
-                                    Err(ClientFailure(message)) => println!("failed to call client tldr: {:?}", message),
+                                    Err(ClientFailure(message)) => {
+                                        println!("failed to call client tldr: {:?}", message)
+                                    }
                                 }
                             } else {
                                 println!("{}", message_create.content.len());
