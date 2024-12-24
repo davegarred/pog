@@ -33,7 +33,7 @@ impl GenerateContentRequest {
 pub struct GenerateContentResponse {
     pub candidates: Vec<Candidate>,
     #[serde(rename = "promptFeedback")]
-    pub prompt_feedback: PromptFeedback,
+    pub prompt_feedback: Option<PromptFeedback>,
 }
 
 impl GenerateContentResponse {
@@ -54,14 +54,14 @@ impl GenerateContentResponse {
 pub struct Candidate {
     pub content: Option<Content>,
     #[serde(rename = "safetyRatings")]
-    pub safety_ratings: Vec<SafetyRating>,
+    pub safety_ratings: Option<Vec<SafetyRating>>,
     #[serde(rename = "finishReason")]
     pub finish_reason: Option<String>,
     #[serde(rename = "citationMetadata")]
     pub citation_metadata: Option<CitationMetadata>,
     #[serde(rename = "tokenCount")]
     pub token_count: Option<u32>,
-    pub index: u32,
+    pub index: Option<u32>,
 }
 
 // https://ai.google.dev/api/rest/v1/Content

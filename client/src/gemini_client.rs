@@ -5,7 +5,7 @@ use lambda_runtime::Error;
 pub async fn generate_content(key: &str, text: String) -> Result<GenerateContentResponse, Error> {
     let request = GenerateContentRequest::new(text);
     match reqwest::Client::new()
-        .post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={}", key))
+        .post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={}", key))
         .headers(headers())
         .json(&request)
         .send()
