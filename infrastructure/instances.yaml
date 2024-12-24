@@ -198,7 +198,7 @@ Resources:
     Properties:
       LaunchTemplateName: !Join [ '-', [ !Ref "AWS::StackName", "gateway" ] ]
       LaunchTemplateData:
-        ImageId: !Ref LatestAmiId
+        ImageId: ami-05d38da78ce859165
         InstanceType: t3.micro
         IamInstanceProfile:
           Name: !Ref Ec2IamInstanceProfile
@@ -210,11 +210,12 @@ Resources:
             !Sub
               - |
                 #!/bin/bash
-                sudo yum update -y
+                sudo apt update && sudo apt upgrade -y
+                snap install aws-cli --classic
                 
-                aws s3 cp s3://${S3Bucket}/pog/${Environment}/gateway /home/ec2-user/gateway
-                chown ec2-user:ec2-user /home/ec2-user/gateway
-                chmod 744 /home/ec2-user/gateway
+                aws s3 cp s3://${S3Bucket}/pog/${Environment}/gateway /home/ubuntu/gateway
+                chown ubuntu:ubuntu /home/ubuntu/gateway
+                chmod 744 /home/ubuntu/gateway
                 
                 cat << SERVICE > /etc/systemd/system/gateway.service
                 [Unit]
@@ -226,10 +227,10 @@ Resources:
                 Type=simple
                 Restart=always
                 RestartSec=1
-                User=ec2-user
-                ExecStart=/home/ec2-user/gateway
-                StandardOutput=append:/home/ec2-user/data.log
-                StandardError=append:/home/ec2-user/error.log
+                User=ubuntu
+                ExecStart=/home/ubuntu/gateway
+                StandardOutput=append:/home/ubuntu/data.log
+                StandardError=append:/home/ubuntu/error.log
                 Environment="DISCORD_APPLICATION_ID=${DiscordApplicationId}"
                 Environment="APPLICATION_TOKEN=${DiscordApplicationToken}"
                 Environment="GEMINI_TOKEN=${GeminiToken}"
@@ -240,9 +241,10 @@ Resources:
                 WantedBy=multi-user.target
                 SERVICE
                 
-                sudo chmod 777 /etc/systemd/system/gateway.service
+                chmod 777 /etc/systemd/system/gateway.service
                 systemctl start gateway
                 systemctl enable gateway
+                reboot now
               - PogClientLambda: !Join [ '-', [ !Ref "AWS::StackName", "client" ] ]
         SecurityGroupIds:
           - sg-0946f92ca0f5d71c5
