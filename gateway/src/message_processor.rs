@@ -94,7 +94,11 @@ impl<T: DiscordClient> MessageProcessor<T> {
                                     }
                                 }
                             } else {
-                                println!("{}", message_create.content.len());
+                                println!(
+                                    "{} - {}",
+                                    message_create.content.len(),
+                                    message_create.author.username
+                                );
                             }
                         }
                         InboundEvent::MessageDelete(_) => {}
@@ -107,10 +111,8 @@ impl<T: DiscordClient> MessageProcessor<T> {
                         InboundEvent::Unknown => println!("unknown event: {}", text),
                     }
                 }
-                Message::Close(close) => {
-                    println!("closing cleanly: {:?}", close);
-                }
-                v => panic!("received an event with a different value: {:?}\n", v),
+                Message::Close(close) => {}
+                v => panic!("received an event with an unexpected message: {:?}\n", v),
             },
             Err(err) => match err {
                 Error::ConnectionClosed => {
