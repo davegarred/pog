@@ -111,7 +111,7 @@ impl<T: DiscordClient> MessageProcessor<T> {
                         InboundEvent::Unknown => println!("unknown event: {}", text),
                     }
                 }
-                Message::Close(close) => {}
+                Message::Close(_close) => {}
                 v => panic!("received an event with an unexpected message: {:?}\n", v),
             },
             Err(err) => match err {
