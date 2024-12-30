@@ -1,8 +1,7 @@
-use lambda_runtime::Error;
-
 use pog_common::{CreateMessage, MessageReference, TlDrMessage};
 
 use crate::discord_client::create_message;
+use crate::error::Error;
 use crate::gemini_client::generate_content;
 use crate::snark::random_snark;
 

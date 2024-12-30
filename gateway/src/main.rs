@@ -1,7 +1,6 @@
 use chrono::Local;
 use std::sync::Mutex;
 
-use crate::discord_client::DefaultDiscordClient;
 use crate::heartbeat::heartbeat;
 use futures_util::{future, pin_mut, StreamExt};
 
@@ -26,13 +25,22 @@ async fn main() {
     let gemini_token =
         std::env::var("GEMINI_TOKEN").expect("finding Gemini token from environment");
     let client_lambda = std::env::var("CLIENT_LAMBDA").expect("finding client lambda name");
-    let discord_client = DefaultDiscordClient::new(
+
+    #[cfg(feature = "aws")]
+    let discord_client = crate::discord_client::AwsDiscordClient::new(
         application_id,
         discord_token.clone(),
         gemini_token,
         client_lambda,
     )
     .await;
+    #[cfg(feature = "gcp")]
+    let discord_client = crate::discord_client::GcpDiscordClient::new(
+        application_id,
+        discord_token.clone(),
+        gemini_token,
+        client_lambda,
+    );
 
     println!("started at {}", Local::now().format("%Y-%m-%dT%H:%M:%S"));
     let resume_gateway = get_gateway().await;

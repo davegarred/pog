@@ -66,7 +66,9 @@ impl<T: DiscordClient> MessageProcessor<T> {
                         InboundEvent::Ack => {}
                         InboundEvent::GuildCreate(_) => {}
                         InboundEvent::MessageCreate(message_create) => {
-                            if message_create.content.len() > TLDR_MESSAGE_LENGTH && message_create.author.bot != Some(true) {
+                            if message_create.content.len() > TLDR_MESSAGE_LENGTH
+                                && message_create.author.bot != Some(true)
+                            {
                                 let author = match message_create.author.global_name {
                                     Some(global_name) => global_name,
                                     None => message_create.author.username,
@@ -111,7 +113,7 @@ impl<T: DiscordClient> MessageProcessor<T> {
                         InboundEvent::Unknown => println!("unknown event: {}", text),
                     }
                 }
-                Message::Close(close) => {}
+                Message::Close(_close) => {}
                 v => panic!("received an event with an unexpected message: {:?}\n", v),
             },
             Err(err) => match err {
