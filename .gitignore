@@ -1,3 +1,7 @@
 /target
+/server/build
+/client/build
+/gateway/build
 /bootstrap*
+
 .idea

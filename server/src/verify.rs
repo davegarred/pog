@@ -1,8 +1,8 @@
 use crate::error::Error;
+use axum::http::HeaderMap;
 use ed25519::signature::Verifier;
 use ed25519::Signature;
 use ed25519_dalek::VerifyingKey;
-use lambda_http::http::HeaderMap;
 
 #[derive(Debug, Clone)]
 pub struct VerifyTool {

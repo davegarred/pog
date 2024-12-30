@@ -6,11 +6,17 @@ edition = "2021"
 [dependencies]
 pog_common = "0.1.0"
 
-aws-config = "0.56"
-aws_lambda_events = "0.11.1"
-lambda_runtime = "0.8.2"
+aws_lambda_events = { version = "0.11.1", optional = true }
+lambda_runtime = { version = "0.8.2", optional = true }
 reqwest = { version = "0.11.22", default-features = false, features = ["rustls-tls", "json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["macros"] }
 rand = "0.8.5"
+
+axum = {  version = "0.6", optional = true }
+tower = { version = "0.4", optional = true }
+tower-http = {  version = "0.4", optional = true }
+[features]
+aws = [ "aws_lambda_events", "lambda_runtime" ]
+gcp = [ "axum", "tower", "tower-http", "tokio/rt-multi-thread" ]

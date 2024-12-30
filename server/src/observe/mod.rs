@@ -8,6 +8,7 @@ pub mod metric;
 pub mod metric_payload;
 pub mod timer;
 
+#[cfg(feature = "aws")]
 pub fn metric(f: impl Fn(MutexGuard<Metrics>)) {
     let pog_metric = match POG_METRIC.get() {
         Some(metric) => metric.clone(),
@@ -19,6 +20,8 @@ pub fn metric(f: impl Fn(MutexGuard<Metrics>)) {
     let metric = pog_metric.lock().unwrap();
     f(metric);
 }
+
+#[cfg(feature = "aws")]
 pub async fn reset_metric(namespace: &str) {
     metric(|mut m| {
         // let payload = m.finish("pog_dev");

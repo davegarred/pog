@@ -3,8 +3,6 @@ use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::discord_id::{split_combined_user_payload, DiscordId};
 use crate::error::Error;
-use crate::metric;
-use crate::observe::Timer;
 use crate::repos::{AttendanceRepository, WagerRepository};
 use crate::wager::{Wager, WagerStatus};
 use discord_api::interaction_request::{ModalSubmitInteractionData, User};
@@ -21,8 +19,8 @@ where
         data: ModalSubmitInteractionData,
         user: &User,
     ) -> Result<InteractionResponse, Error> {
-        let _timer = Timer::new("t11_add_wager_time");
-        metric(|mut m| m.count("t11_add_wager"));
+        // let _timer = Timer::new("t11_add_wager_time");
+        // metric(|mut m| m.count("t11_add_wager"));
 
         let offering = match &user.global_name {
             None => user.username.to_string(),

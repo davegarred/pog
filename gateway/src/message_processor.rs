@@ -1,11 +1,12 @@
+use futures_channel::mpsc::UnboundedSender;
+use tokio_tungstenite::tungstenite::{Error, Message};
+
 use crate::discord_client::DiscordClient;
 use crate::error::Error::ClientFailure;
 use crate::heartbeat::WebsocketUpdate;
 use crate::inbound_payloads::{InboundEvent, InboundPayload};
 use crate::payloads::DiscordGatewayResponse;
 use crate::TLDR_MESSAGE_LENGTH;
-use futures_channel::mpsc::UnboundedSender;
-use tokio_tungstenite::tungstenite::{Error, Message};
 
 pub struct MessageProcessor<T: DiscordClient> {
     resume_gateway: String,
@@ -66,18 +67,13 @@ impl<T: DiscordClient> MessageProcessor<T> {
                         InboundEvent::Ack => {}
                         InboundEvent::GuildCreate(_) => {}
                         InboundEvent::MessageCreate(message_create) => {
-                            if message_create.content.len() > TLDR_MESSAGE_LENGTH && message_create.author.bot != Some(true) {
+                            if message_create.content.len() > TLDR_MESSAGE_LENGTH
+                                && message_create.author.bot != Some(true)
+                            {
                                 let author = match message_create.author.global_name {
                                     Some(global_name) => global_name,
-                                    None => message_create.author.username,
+                                    None => message_create.author.username.clone(),
                                 };
-                                println!(
-                                    "tl;dr message: {} chars, {} ({}) : {}",
-                                    message_create.content.len(),
-                                    author,
-                                    message_create.channel_id,
-                                    message_create.content
-                                );
                                 match self
                                     .discord_client
                                     .tldr(
@@ -111,7 +107,7 @@ impl<T: DiscordClient> MessageProcessor<T> {
                         InboundEvent::Unknown => println!("unknown event: {}", text),
                     }
                 }
-                Message::Close(close) => {}
+                Message::Close(_close) => {}
                 v => panic!("received an event with an unexpected message: {:?}\n", v),
             },
             Err(err) => match err {

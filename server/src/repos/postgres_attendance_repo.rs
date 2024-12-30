@@ -92,11 +92,5 @@ mod test {
 
         let result = repo.week_attendance(1, &None).await.unwrap();
         assert_eq!(4, result.attendance.len());
-
-        // let result = repo.week_attendance(2, &None).await.unwrap();
-        // assert_eq!(1, result.attendance.len());
-        //
-        // let result = repo.week_attendance(5, &None).await.unwrap();
-        // assert_eq!(2, result.attendance.len());
     }
 }
