@@ -66,7 +66,7 @@ impl<T: DiscordClient> MessageProcessor<T> {
                         InboundEvent::Ack => {}
                         InboundEvent::GuildCreate(_) => {}
                         InboundEvent::MessageCreate(message_create) => {
-                            if message_create.content.len() > TLDR_MESSAGE_LENGTH {
+                            if message_create.content.len() > TLDR_MESSAGE_LENGTH && message_create.author.bot != Some(true) {
                                 let author = match message_create.author.global_name {
                                     Some(global_name) => global_name,
                                     None => message_create.author.username,
