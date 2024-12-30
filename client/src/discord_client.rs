@@ -1,6 +1,6 @@
-use lambda_runtime::Error;
 use serde::{Deserialize, Serialize};
 
+use crate::error::Error;
 use pog_common::{discord_headers, CreateMessage, DeleteMessage, UpdateMessage};
 
 pub async fn delete_message(message: DeleteMessage) -> Result<(), Error> {
@@ -13,7 +13,7 @@ pub async fn delete_message(message: DeleteMessage) -> Result<(), Error> {
         Ok(_) => Ok(()),
         Err(err) => {
             println!("ERROR calling Discord: {}", err);
-            Err("unable to delete message".into())
+            Err(Error::ClientDelete(err.to_string()))
         }
     }
 }
@@ -30,7 +30,7 @@ pub async fn update_message(message: UpdateMessage) -> Result<(), Error> {
         Ok(_) => Ok(()),
         Err(err) => {
             println!("ERROR calling Discord: {}", err);
-            Err("unable to update message".into())
+            Err(Error::ClientUpdate(err.to_string()))
         }
     }
 }
@@ -47,7 +47,7 @@ pub async fn create_message(message: CreateMessage) -> Result<(), Error> {
         Ok(_) => Ok(()),
         Err(err) => {
             println!("ERROR calling Discord: {}", err);
-            Err("unable to update message".into())
+            Err(Error::ClientCreate(err.to_string()))
         }
     }
 }

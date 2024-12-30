@@ -1,6 +1,6 @@
+use crate::error::Error;
 use crate::gemini_dtos::{GenerateContentRequest, GenerateContentResponse};
-use aws_lambda_events::http::HeaderMap;
-use lambda_runtime::Error;
+use reqwest::header::HeaderMap;
 
 pub async fn generate_content(key: &str, text: String) -> Result<GenerateContentResponse, Error> {
     let request = GenerateContentRequest::new(text);
@@ -12,11 +12,14 @@ pub async fn generate_content(key: &str, text: String) -> Result<GenerateContent
         .await
     {
         Ok(result) => {
-            Ok(result.json().await?)
+            if !result.status().is_success() {
+                Err(Error::Gemini(format!("Gemini returned {} - {:?}", result.status(), result.text().await.unwrap_or(String::new()))))
+            } else {
+                Ok(result.json().await?)
+            }
         },
         Err(err) => {
-            println!("ERROR calling Gemini: {}", err);
-            Err("unable to update message".into())
+            Err(Error::Gemini(err.to_string()))
         }
     }
 }

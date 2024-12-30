@@ -1,8 +1,7 @@
-use lambda_runtime::Error;
-
 use pog_common::{CreateMessage, MessageReference, TlDrMessage};
 
 use crate::discord_client::create_message;
+use crate::error::Error;
 use crate::gemini_client::generate_content;
 use crate::snark::random_snark;
 
@@ -40,12 +39,10 @@ pub async fn generate_summarization(gemini_key: &str, message: &str) -> Result<S
 Opinion: {}",
             message
         );
-        let summarize_response = generate_content(gemini_key, summarize_prompt)
-            .await?
-            .first_candidate();
-        if !summarize_response.is_empty() {
-            return Ok(summarize_response);
+        let summarize_response = generate_content(gemini_key, summarize_prompt).await?;
+        if !summarize_response.first_candidate().is_empty() {
+            return Ok(summarize_response.first_candidate());
         }
     }
-    Ok("".to_string())
+    Err(Error::NoGeminiCandidatesReceived)
 }
