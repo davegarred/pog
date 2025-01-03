@@ -12,10 +12,13 @@ pub async fn generate_content(key: &str, text: String) -> Result<GenerateContent
         .await
     {
         Ok(result) => {
-            Ok(result.json().await?)
+            if !result.status().is_success() {
+                Err(Error::Gemini(format!("Gemini returned {} - {:?}", result.status(), result.text().await.unwrap_or(String::new()))))
+            } else {
+                Ok(result.json().await?)
+            }
         },
         Err(err) => {
-            println!("ERROR calling Gemini: {}", err);
             Err(Error::Gemini(err.to_string()))
         }
     }

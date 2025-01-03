@@ -29,6 +29,7 @@ esac
 
 DISCORD_APP_ID_KEY=pog-discord_app_id-$ENVIRONMENT
 DISCORD_APP_TOKEN_KEY=pog-discord_app_token-$ENVIRONMENT
+GEMINI_TOKEN_KEY=pog-gemini_token-$ENVIRONMENT
 
 if ! DISCORD_APP_ID=$( gcloud secrets versions access latest --secret="$DISCORD_APP_ID_KEY" )
 then
@@ -40,7 +41,12 @@ then
     echo "expected secret was not found: $1"
     exit 1
 fi
-GEMINI_TOKEN="__GeminiToken__"
+if ! GEMINI_TOKEN=$( gcloud secrets versions access latest --secret="$GEMINI_TOKEN_KEY" )
+then
+    echo "expected secret was not found: $1"
+    exit 1
+fi
+echo "gemini token: $GEMINI_TOKEN"
 
 docker run --rm -d \
     -e DISCORD_APPLICATION_ID="$DISCORD_APP_ID" \

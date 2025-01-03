@@ -52,7 +52,8 @@ pub async fn post_handler(
     match payload_router(message).await {
         Ok(_) => axum::response::IntoResponse::into_response(reqwest::StatusCode::OK),
         Err(err) => {
-            println!("failure: {:#?}", err);
+            let message = format!("failure: {:#?}", err);
+            println!("{}", message);
             axum::response::IntoResponse::into_response(reqwest::StatusCode::INTERNAL_SERVER_ERROR)
         }
     }

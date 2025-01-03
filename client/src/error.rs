@@ -7,6 +7,7 @@ pub enum Error {
     ClientDelete(String),
     Gemini(String),
     UnknownCommunication(String),
+    NoGeminiCandidatesReceived,
 }
 
 impl From<reqwest::Error> for Error {
@@ -29,6 +30,7 @@ impl Display for Error {
             Error::ClientDelete(msg) => msg,
             Error::Gemini(msg) => msg,
             Error::UnknownCommunication(msg) => msg,
+            Error::NoGeminiCandidatesReceived => "Gemini did not produce a valid candidate",
         };
         write!(f, "{}", msg)
     }
