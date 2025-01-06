@@ -14,7 +14,7 @@ prepare:
 	sudo apt install musl-tools
 
 test:
-	cargo test
+	cargo test --features integration-test
 
 check:
 	cargo audit

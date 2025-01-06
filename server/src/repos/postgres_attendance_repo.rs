@@ -74,6 +74,7 @@ impl AttendanceRepository for PostgresAttendanceRepository {
 }
 
 #[cfg(test)]
+#[cfg(feature = "integration-test")]
 mod test {
     use crate::repos::new_db_pool;
     use crate::repos::{AttendanceRepository, PostgresAttendanceRepository};

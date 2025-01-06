@@ -129,6 +129,7 @@ fn row_to_wager(row: PgRow) -> Wager {
 }
 
 #[cfg(test)]
+#[cfg(feature = "integration-test")]
 mod test {
     use chrono::NaiveDate;
 
