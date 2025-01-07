@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use pog_common::{ADD_BET_COMMAND, ATTENDANCE_BET_COMMAND, LIST_BET_COMMAND, SETTLE_BET_COMMAND};
+use pog_common::{
+    ADD_BET_COMMAND, ADMIN_COMMAND, ATTENDANCE_BET_COMMAND, HELP_COMMAND, LIST_BET_COMMAND,
+    SETTLE_BET_COMMAND,
+};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationCommand {
@@ -82,6 +85,25 @@ impl ApplicationCommand {
                     required: false,
                 },
             ]),
+        }
+    }
+
+    pub fn help() -> Self {
+        Self {
+            id: None,
+            command_type: 1,
+            name: HELP_COMMAND.to_string(),
+            description: "Get help with POG".to_string(),
+            options: None,
+        }
+    }
+    pub fn admin() -> Self {
+        Self {
+            id: None,
+            command_type: 1,
+            name: ADMIN_COMMAND.to_string(),
+            description: "POG admin tool".to_string(),
+            options: None,
         }
     }
 }

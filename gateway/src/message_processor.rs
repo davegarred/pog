@@ -100,22 +100,6 @@ impl MessageProcessor {
                                         }
                                     },
                                 }
-
-                                // match self
-                                //     .discord_client
-                                //     .tldr(
-                                //         message_create.channel_id.as_str(),
-                                //         message_create.id.as_str(),
-                                //         author.as_str(),
-                                //         message_create.content.as_str(),
-                                //     )
-                                //     .await
-                                // {
-                                //     Ok(_) => {}
-                                //     Err(ClientFailure(message)) => {
-                                //         println!("failed to call client tldr: {:?}", message)
-                                //     }
-                                // }
                             } else {
                                 println!(
                                     "{} - {}",
@@ -123,6 +107,16 @@ impl MessageProcessor {
                                     message_create.author.username
                                 );
                             }
+                        }
+                        InboundEvent::MemberAdd(member_add) => {
+                            let user = member_add
+                                .user
+                                .expect("member add message did not come with a user");
+                            println!(
+                                "TODO: send a welcome note to: {} - @{}",
+                                user.global_name.expect("new user missing a global name"),
+                                user.id
+                            );
                         }
                         InboundEvent::MessageDelete(_) => {}
                         InboundEvent::MessageReactionAdd(_) => {}

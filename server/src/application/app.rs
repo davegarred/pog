@@ -62,6 +62,8 @@ where
             pog_common::LIST_BET_COMMAND => self.list_bets(data).await,
             pog_common::SETTLE_BET_COMMAND => self.pay_bet(data, user).await,
             pog_common::ATTENDANCE_BET_COMMAND => self.attendance(data, user).await,
+            pog_common::HELP_COMMAND => self.help().await,
+            pog_common::ADMIN_COMMAND => self.admin(data, user).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
                 data.name

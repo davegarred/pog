@@ -37,6 +37,8 @@ impl DiscordClient {
             ApplicationCommand::list_bets(),
             ApplicationCommand::settle(),
             ApplicationCommand::attendance(),
+            ApplicationCommand::help(),
+            ApplicationCommand::admin(),
         ];
         let mut uri = discord_api_root();
         uri.push_str(

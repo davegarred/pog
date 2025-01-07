@@ -66,6 +66,11 @@ impl InboundPayload {
                             .expect("deserialize a message update event");
                         InboundEvent::MessageUpdate(payload)
                     }
+                    "GUILD_MEMBER_ADD" => {
+                        let payload = serde_json::from_value(self.d)
+                            .expect("deserialize a message update event");
+                        InboundEvent::MemberAdd(payload)
+                    }
                     name => {
                         println!("unknown event name {}", name);
                         InboundEvent::Unknown
@@ -73,6 +78,7 @@ impl InboundPayload {
                 },
                 _ => InboundEvent::Unknown,
             },
+            9 => panic!("invalid session, op: 9"),
             op => panic!("Unknown inbound message op: {}", op),
         }
     }
@@ -91,6 +97,7 @@ pub enum InboundEvent {
     MessageReactionAdd(MessageReactionAddEvent),
     MessageReactionRemove(MessageReactionRemoveEvent),
     MessageUpdate(MessageUpdateEvent),
+    MemberAdd(MemberAddEvent),
     TypingStart(TypingStartEvent),
     Unknown,
 }
@@ -146,6 +153,11 @@ pub struct MessageDeleteEvent {
 pub struct MessageUpdateEvent {
     pub content: Option<String>,
     pub author: Option<User>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MemberAddEvent {
+    pub user: Option<User>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -268,6 +280,20 @@ mod test {
             InboundEvent::MessageUpdate(message_update) => {
                 assert_eq!("ingae8641", message_update.author.unwrap().username);
                 assert_eq!("Moving the previous post to the right channel. I’ve got some stuff to give away!", message_update.content.unwrap());
+            }
+            _ => panic!("fail"),
+        }
+    }
+
+    #[test]
+    fn guild_member_add() {
+        let contents = fs::read_to_string("dto_payloads/guild_member_add.json").unwrap();
+        let payload: InboundPayload = serde_json::from_str(&contents).unwrap();
+        match payload.event() {
+            InboundEvent::MemberAdd(member_add) => {
+                let user = member_add.user.unwrap();
+                assert_eq!("testuser2_35118", &user.username);
+                assert_eq!("test-user-2", &user.global_name.unwrap());
             }
             _ => panic!("fail"),
         }
