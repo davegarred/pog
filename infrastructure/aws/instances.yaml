@@ -193,77 +193,77 @@ Resources:
       InvokeMode: BUFFERED
       TargetFunctionArn: !Ref ServerLambda
 
-  GatewayTemplate:
-    Type: AWS::EC2::LaunchTemplate
-    Properties:
-      LaunchTemplateName: !Join [ '-', [ !Ref "AWS::StackName", "gateway" ] ]
-      LaunchTemplateData:
-        ImageId: ami-05d38da78ce859165
-        InstanceType: t3.micro
-        IamInstanceProfile:
-          Name: !Ref Ec2IamInstanceProfile
-        KeyName: pog-gateway-test
-        MetadataOptions:
-          HttpTokens: optional
-        UserData:
-          Fn::Base64:
-            !Sub
-              - |
-                #!/bin/bash
-                sudo apt update && sudo apt upgrade -y
-                snap install aws-cli --classic
-                
-                aws s3 cp s3://${S3Bucket}/pog/${Environment}/gateway /home/ubuntu/gateway
-                chown ubuntu:ubuntu /home/ubuntu/gateway
-                chmod 744 /home/ubuntu/gateway
-                
-                cat << SERVICE > /etc/systemd/system/gateway.service
-                [Unit]
-                Description=POG gateway service (demo)
-                After=network.target
-                StartLimitIntervalSec=0
-                
-                [Service]
-                Type=simple
-                Restart=always
-                RestartSec=1
-                User=ubuntu
-                ExecStart=/home/ubuntu/gateway
-                StandardOutput=append:/home/ubuntu/data.log
-                StandardError=append:/home/ubuntu/error.log
-                Environment="DISCORD_APPLICATION_ID=${DiscordApplicationId}"
-                Environment="APPLICATION_TOKEN=${DiscordApplicationToken}"
-                Environment="GEMINI_TOKEN=${GeminiToken}"
-                Environment="CLIENT_LAMBDA=${PogClientLambda}"
-                Environment="ENVIRONMENT=${Environment}"
-                
-                [Install]
-                WantedBy=multi-user.target
-                SERVICE
-                
-                chmod 777 /etc/systemd/system/gateway.service
-                systemctl start gateway
-                systemctl enable gateway
-                reboot now
-              - PogClientLambda: !Join [ '-', [ !Ref "AWS::StackName", "client" ] ]
-        SecurityGroupIds:
-          - sg-0946f92ca0f5d71c5
-  GatewayAutoscaler:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      LaunchTemplate:
-        LaunchTemplateId: !Ref GatewayTemplate
-        Version: !GetAtt GatewayTemplate.LatestVersionNumber
-      MaxSize: '1'
-      MinSize: '1'
-      AvailabilityZones:
-        - us-west-2a
-        - us-west-2b
-      #      VPCZoneIdentifier: !Ref Subnets
-      Tags:
-        - Key: "Name"
-          Value: !Join [ '-', [ !Ref "AWS::StackName", "gateway" ] ]
-          PropagateAtLaunch: true
+#  GatewayTemplate:
+#    Type: AWS::EC2::LaunchTemplate
+#    Properties:
+#      LaunchTemplateName: !Join [ '-', [ !Ref "AWS::StackName", "gateway" ] ]
+#      LaunchTemplateData:
+#        ImageId: ami-05d38da78ce859165
+#        InstanceType: t3.micro
+#        IamInstanceProfile:
+#          Name: !Ref Ec2IamInstanceProfile
+#        KeyName: pog-gateway-test
+#        MetadataOptions:
+#          HttpTokens: optional
+#        UserData:
+#          Fn::Base64:
+#            !Sub
+#              - |
+#                #!/bin/bash
+#                sudo apt update && sudo apt upgrade -y
+#                snap install aws-cli --classic
+#
+#                aws s3 cp s3://${S3Bucket}/pog/${Environment}/gateway /home/ubuntu/gateway
+#                chown ubuntu:ubuntu /home/ubuntu/gateway
+#                chmod 744 /home/ubuntu/gateway
+#
+#                cat << SERVICE > /etc/systemd/system/gateway.service
+#                [Unit]
+#                Description=POG gateway service (demo)
+#                After=network.target
+#                StartLimitIntervalSec=0
+#
+#                [Service]
+#                Type=simple
+#                Restart=always
+#                RestartSec=1
+#                User=ubuntu
+#                ExecStart=/home/ubuntu/gateway
+#                StandardOutput=append:/home/ubuntu/data.log
+#                StandardError=append:/home/ubuntu/error.log
+#                Environment="DISCORD_APPLICATION_ID=${DiscordApplicationId}"
+#                Environment="APPLICATION_TOKEN=${DiscordApplicationToken}"
+#                Environment="GEMINI_TOKEN=${GeminiToken}"
+#                Environment="CLIENT_LAMBDA=${PogClientLambda}"
+#                Environment="ENVIRONMENT=${Environment}"
+#
+#                [Install]
+#                WantedBy=multi-user.target
+#                SERVICE
+#
+#                chmod 777 /etc/systemd/system/gateway.service
+#                systemctl start gateway
+#                systemctl enable gateway
+#                reboot now
+#              - PogClientLambda: !Join [ '-', [ !Ref "AWS::StackName", "client" ] ]
+#        SecurityGroupIds:
+#          - sg-0946f92ca0f5d71c5
+#  GatewayAutoscaler:
+#    Type: AWS::AutoScaling::AutoScalingGroup
+#    Properties:
+#      LaunchTemplate:
+#        LaunchTemplateId: !Ref GatewayTemplate
+#        Version: !GetAtt GatewayTemplate.LatestVersionNumber
+#      MaxSize: '1'
+#      MinSize: '1'
+#      AvailabilityZones:
+#        - us-west-2a
+#        - us-west-2b
+#      #      VPCZoneIdentifier: !Ref Subnets
+#      Tags:
+#        - Key: "Name"
+#          Value: !Join [ '-', [ !Ref "AWS::StackName", "gateway" ] ]
+#          PropagateAtLaunch: true
 
 Outputs:
   ServerFunctionUrl:

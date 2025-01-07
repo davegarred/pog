@@ -1,11 +1,6 @@
 #!/bin/bash
 # Deploys a VM on GCP running the gateway image (tag: latest)
 
-if [[ ! -n "${CLIENT_LAMBDA:-}" ]];
-then
-    echo "expects a url for the discord client service in environment variable: CLIENT_LAMBDA"
-    exit 1
-fi
 if [[ ! -n "${POG_REPO:-}" ]];
 then
     echo "expects a repository in environment variable: POG_REPO"
@@ -39,7 +34,7 @@ then
     exit 1
 fi
 
-CONTAINER_ENVS="GEMINI_TOKEN=$GEMINI_TOKEN,CLIENT_LAMBDA=$CLIENT_LAMBDA,DISCORD_APPLICATION_ID=$DISCORD_APP_ID,APPLICATION_TOKEN=$DISCORD_APP_TOKEN,ENVIRONMENT=$ENVIRONMENT"
+CONTAINER_ENVS="GEMINI_TOKEN=$GEMINI_TOKEN,DISCORD_APPLICATION_ID=$DISCORD_APP_ID,APPLICATION_TOKEN=$DISCORD_APP_TOKEN,ENVIRONMENT=$ENVIRONMENT"
 
 DEPLOYMENT_TIME=$( date +%y%m%d%H%M )
 INSTANCE_NAME=pog-gateway-$ENVIRONMENT-$DEPLOYMENT_TIME
