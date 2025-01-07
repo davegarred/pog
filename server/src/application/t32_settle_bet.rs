@@ -1,8 +1,6 @@
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
-use crate::metric;
-use crate::observe::Timer;
 use crate::repos::{AttendanceRepository, WagerRepository};
 use crate::wager::WagerStatus;
 use discord_api::interaction_request::{InteractionObject, MessageComponentInteractionData};
@@ -20,8 +18,8 @@ where
         data: MessageComponentInteractionData,
         request: InteractionObject,
     ) -> Result<InteractionResponse, Error> {
-        let _timer = Timer::new("t32_settle_bet_time");
-        metric(|mut m| m.count("t32_settle_bet"));
+        // let _timer = Timer::new("t32_settle_bet_time");
+        // metric(|mut m| m.count("t32_settle_bet"));
 
         let (designator, wager_id) = split_custom_id(&data.custom_id)?;
 

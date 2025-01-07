@@ -1,4 +1,3 @@
-use crate::metric;
 use chrono::{Datelike, Duration, NaiveDate, Utc};
 
 pub fn parse_date(value: &str) -> Option<NaiveDate> {
@@ -26,7 +25,7 @@ fn try_guessing_year(value: &str, today: NaiveDate) -> Option<NaiveDate> {
             }
         }
         Err(_) => {
-            metric(|mut m| m.count("parse_date_failure"));
+            // metric(|mut m| m.count("parse_date_failure"));
             None
         }
     }

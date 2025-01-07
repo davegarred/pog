@@ -9,9 +9,8 @@ use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::discord_id::DiscordId;
 use crate::error::Error;
-use crate::observe::Timer;
 use crate::repos::{AttendanceRepository, WagerRepository};
-use crate::{metric, CURRENT_FF_WEEK};
+use crate::CURRENT_FF_WEEK;
 
 impl<WR, AR, C> Application<WR, AR, C>
 where
@@ -24,8 +23,8 @@ where
         data: ApplicationCommandInteractionData,
         user: &User,
     ) -> Result<InteractionResponse, Error> {
-        let _timer = Timer::new("t40_attendance_time");
-        metric(|mut m| m.count("t40_attendance"));
+        // let _timer = crate::observe::Timer::new("t40_attendance_time");
+        // crate::metric(|mut m| m.count("t40_attendance"));
 
         let command_user = match DiscordId::from_raw_str(&user.id) {
             Some(user) => user,

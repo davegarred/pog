@@ -5,8 +5,6 @@ use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::discord_id::DiscordId;
 use crate::error::Error;
-use crate::metric;
-use crate::observe::Timer;
 use crate::repos::{AttendanceRepository, WagerRepository};
 use crate::wager::Wager;
 
@@ -21,8 +19,8 @@ where
         _data: ApplicationCommandInteractionData,
         user: &User,
     ) -> Result<InteractionResponse, Error> {
-        let _timer = Timer::new("t30_pay_bet_time");
-        metric(|mut m| m.count("t30_pay_bet"));
+        // let _timer = Timer::new("t30_pay_bet_time");
+        // metric(|mut m| m.count("t30_pay_bet"));
 
         let wagers = match DiscordId::from_raw_str(&user.id) {
             Some(user_id) => self.wager_repo.search_by_user_id(&user_id).await?,

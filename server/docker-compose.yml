@@ -4,6 +4,7 @@ services:
   db:
     image: postgres
     restart: always
+#    network_mode: host
     ports:
       - 5432:5432
     environment:

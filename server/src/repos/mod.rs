@@ -2,7 +2,8 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 
 pub use attendance_record::AttendanceRecords;
-pub use attendance_repository::{AttendanceRepository, InMemoryAttendanceRepository};
+pub use attendance_repository::AttendanceRepository;
+pub use attendance_repository::InMemoryAttendanceRepository;
 pub use postgres_attendance_repo::PostgresAttendanceRepository;
 pub use postgres_wager_repository::PostgresWagerRepo;
 pub use wager_repository::{InMemWagerRepository, WagerRepository};

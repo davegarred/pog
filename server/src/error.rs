@@ -43,3 +43,10 @@ impl From<InteractionError> for Error {
         Error::Invalid(message)
     }
 }
+
+#[cfg(feature = "gcp")]
+impl From<reqwest::Error> for Error {
+    fn from(value: reqwest::Error) -> Self {
+        Self::ClientFailure(value.to_string())
+    }
+}

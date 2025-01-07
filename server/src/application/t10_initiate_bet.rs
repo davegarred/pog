@@ -8,9 +8,8 @@ use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::discord_id::{combine_user_payload, DiscordId};
 use crate::error::Error;
-use crate::observe::Timer;
 use crate::repos::{AttendanceRepository, WagerRepository};
-use crate::{metric, ADD_BET_PLACEHOLDER_TEXT};
+use crate::ADD_BET_PLACEHOLDER_TEXT;
 
 impl<WR, AR, C> Application<WR, AR, C>
 where
@@ -22,8 +21,8 @@ where
         &self,
         data: ApplicationCommandInteractionData,
     ) -> Result<InteractionResponse, Error> {
-        let _timer = Timer::new("t10_initiate_bet_time");
-        metric(|mut m| m.count("t10_initiate_bet"));
+        // let _timer = Timer::new("t10_initiate_bet_time");
+        // metric(|mut m| m.count("t10_initiate_bet"));
 
         let option = match data.options.first() {
             Some(option) => option,

@@ -1,27 +1,25 @@
 use async_trait::async_trait;
-use aws_config::BehaviorVersion;
-use aws_sdk_lambda::primitives::Blob;
-use aws_sdk_lambda::types::InvocationType;
 use pog_common::{Authorization, DeleteMessage, DiscordMessage};
 
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
-use crate::observe::Timer;
 
+#[cfg(feature = "aws")]
 #[derive(Debug, Clone)]
-pub struct DefaultDiscordClient {
+pub struct AwsDefaultDiscordClient {
     authorization: Authorization,
     client: aws_sdk_lambda::Client,
     client_function_name: String,
 }
 
-impl DefaultDiscordClient {
+#[cfg(feature = "aws")]
+impl AwsDefaultDiscordClient {
     pub async fn new(
         application_id: String,
         application_token: String,
         client_function_name: String,
     ) -> Self {
-        let config = aws_config::load_defaults(BehaviorVersion::latest()).await;
+        let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
         let client = aws_sdk_lambda::Client::new(&config);
         let authorization = Authorization {
             application_id,
@@ -35,8 +33,9 @@ impl DefaultDiscordClient {
     }
 }
 
+#[cfg(feature = "aws")]
 #[async_trait]
-impl DiscordClient for DefaultDiscordClient {
+impl DiscordClient for AwsDefaultDiscordClient {
     async fn delete_message(&self, message_id: &str, request_token: &str) -> Result<(), Error> {
         let delete = DeleteMessage {
             authorization: self.authorization.clone(),
@@ -46,13 +45,13 @@ impl DiscordClient for DefaultDiscordClient {
         let message = DiscordMessage::Delete(delete);
         let payload = serde_json::to_vec(&message).unwrap();
 
-        let _timer = Timer::new("client_delete_time");
+        let _timer = crate::observe::Timer::new("client_delete_time");
         match self
             .client
             .invoke()
             .function_name(&self.client_function_name)
-            .set_invocation_type(Some(InvocationType::Event))
-            .payload(Blob::new(payload.as_slice()))
+            .set_invocation_type(Some(aws_sdk_lambda::types::InvocationType::Event))
+            .payload(aws_sdk_lambda::primitives::Blob::new(payload.as_slice()))
             .send()
             .await
         {
@@ -67,6 +66,72 @@ impl DiscordClient for DefaultDiscordClient {
         _request_token: &str,
         _message: &str,
     ) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "gcp")]
+#[derive(Debug, Clone)]
+pub struct GcpDefaultDiscordClient {
+    authorization: Authorization,
+    url: String,
+}
+
+#[cfg(feature = "gcp")]
+impl GcpDefaultDiscordClient {
+    pub async fn new(application_id: String, application_token: String, url: String) -> Self {
+        let authorization = Authorization {
+            application_id,
+            application_token,
+        };
+        Self { authorization, url }
+    }
+
+    pub async fn send(&self, message: DiscordMessage) -> Result<(), Error> {
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert(
+            "Content-Type",
+            "application/json; charset=UTF-8".parse().unwrap(),
+        );
+        let url = format!("{}:8080/call", self.url);
+        let response = reqwest::Client::new()
+            .post(url)
+            .headers(headers)
+            .json(&message)
+            .send()
+            .await?;
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            let msg = format!(
+                "failure to call pog client with status {}: {}",
+                response.status().to_string(),
+                response.text().await.unwrap_or(String::new())
+            );
+            Err(Error::ClientFailure(msg))
+        }
+    }
+}
+
+#[cfg(feature = "gcp")]
+#[async_trait]
+impl DiscordClient for GcpDefaultDiscordClient {
+    async fn delete_message(&self, message_id: &str, request_token: &str) -> Result<(), Error> {
+        let message = DiscordMessage::Delete(DeleteMessage {
+            authorization: self.authorization.clone(),
+            message_id: message_id.to_string(),
+            request_token: request_token.to_string(),
+        });
+        self.send(message).await
+    }
+
+    async fn set_message(
+        &self,
+        _message_id: &str,
+        _request_token: &str,
+        _message: &str,
+    ) -> Result<(), Error> {
+        // TODO: use this or nuke it
         Ok(())
     }
 }
