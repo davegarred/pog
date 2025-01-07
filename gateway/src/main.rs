@@ -2,17 +2,20 @@ use chrono::Local;
 use std::sync::Mutex;
 
 use crate::heartbeat::heartbeat;
-use futures_util::{future, pin_mut, StreamExt};
-
 use crate::inbound_payloads::GetGateway;
 use crate::message_processor::MessageProcessor;
+use futures_util::{future, pin_mut, StreamExt};
+use pog_common::Authorization;
 
-mod discord_client;
 mod error;
+mod gemini_client;
+mod gemini_dtos;
 mod heartbeat;
 mod inbound_payloads;
 mod message_processor;
 mod payloads;
+mod snark;
+mod tldr;
 
 const TLDR_MESSAGE_LENGTH: usize = 700;
 
@@ -22,25 +25,12 @@ async fn main() {
         std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
     let discord_token =
         std::env::var("APPLICATION_TOKEN").expect("finding Discord token from environment");
+    let authorization = Authorization {
+        application_id,
+        application_token: discord_token.clone(),
+    };
     let gemini_token =
         std::env::var("GEMINI_TOKEN").expect("finding Gemini token from environment");
-    let client_lambda = std::env::var("CLIENT_LAMBDA").expect("finding client lambda name");
-
-    #[cfg(feature = "aws")]
-    let discord_client = crate::discord_client::AwsDiscordClient::new(
-        application_id,
-        discord_token.clone(),
-        gemini_token,
-        client_lambda,
-    )
-    .await;
-    #[cfg(feature = "gcp")]
-    let discord_client = crate::discord_client::GcpDiscordClient::new(
-        application_id,
-        discord_token.clone(),
-        gemini_token,
-        client_lambda,
-    );
 
     println!("started at {}", Local::now().format("%Y-%m-%dT%H:%M:%S"));
     let resume_gateway = get_gateway().await;
@@ -52,9 +42,10 @@ async fn main() {
     let message_processor = Mutex::new(MessageProcessor::new(
         resume_gateway.clone(),
         discord_token,
+        authorization,
+        gemini_token,
         stdin_tx,
         internal_tx,
-        discord_client,
     ));
 
     let (ws_stream, _) =

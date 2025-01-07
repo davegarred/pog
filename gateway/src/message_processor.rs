@@ -1,41 +1,47 @@
-use futures_channel::mpsc::UnboundedSender;
-use tokio_tungstenite::tungstenite::{Error, Message};
-
-use crate::discord_client::DiscordClient;
-use crate::error::Error::ClientFailure;
+use crate::error::Error;
 use crate::heartbeat::WebsocketUpdate;
 use crate::inbound_payloads::{InboundEvent, InboundPayload};
 use crate::payloads::DiscordGatewayResponse;
+use crate::tldr;
 use crate::TLDR_MESSAGE_LENGTH;
+use futures_channel::mpsc::UnboundedSender;
+use pog_common::{Authorization, TlDrMessage};
+use tokio_tungstenite::tungstenite::Message;
 
-pub struct MessageProcessor<T: DiscordClient> {
+pub struct MessageProcessor {
     resume_gateway: String,
     discord_token: String,
     session_id: Option<String>,
+    authorization: Authorization,
+    gemini_token: String,
     sender: UnboundedSender<Message>,
     internal_tx: UnboundedSender<WebsocketUpdate>,
-    discord_client: T,
 }
 
-impl<T: DiscordClient> MessageProcessor<T> {
+impl MessageProcessor {
     pub fn new(
         resume_gateway: String,
         discord_token: String,
+        authorization: Authorization,
+        gemini_token: String,
         sender: UnboundedSender<Message>,
         internal_tx: UnboundedSender<WebsocketUpdate>,
-        discord_client: T,
     ) -> Self {
         Self {
             resume_gateway,
             discord_token,
             session_id: None,
+            authorization,
+            gemini_token,
             sender,
             internal_tx,
-            discord_client,
         }
     }
 
-    pub async fn process(&mut self, message: Result<Message, Error>) {
+    pub async fn process(
+        &mut self,
+        message: Result<Message, tokio_tungstenite::tungstenite::Error>,
+    ) {
         match message {
             Ok(value) => match value {
                 Message::Text(text) => {
@@ -74,21 +80,42 @@ impl<T: DiscordClient> MessageProcessor<T> {
                                     Some(global_name) => global_name,
                                     None => message_create.author.username.clone(),
                                 };
-                                match self
-                                    .discord_client
-                                    .tldr(
-                                        message_create.channel_id.as_str(),
-                                        message_create.id.as_str(),
-                                        author.as_str(),
-                                        message_create.content.as_str(),
-                                    )
-                                    .await
-                                {
-                                    Ok(_) => {}
-                                    Err(ClientFailure(message)) => {
-                                        println!("failed to call client tldr: {:?}", message)
-                                    }
+                                let tldr_message = TlDrMessage {
+                                    authorization: self.authorization.clone(),
+                                    original_message_id: message_create.id,
+                                    channel_id: message_create.channel_id,
+                                    gemini_key: self.gemini_token.clone(),
+                                    author,
+                                    message: message_create.content,
+                                };
+                                match tldr::tldr(tldr_message).await {
+                                    Ok(()) => {}
+                                    Err(err) => match err {
+                                        Error::ClientFailure(msg) => {
+                                            println!("failed to call client tldr: {:?}", msg)
+                                        }
+                                        Error::Gemini(msg) => println!("gemini error: {:?}", msg),
+                                        Error::NoGeminiCandidatesReceived => {
+                                            println!("no gemini candidates found")
+                                        }
+                                    },
                                 }
+
+                                // match self
+                                //     .discord_client
+                                //     .tldr(
+                                //         message_create.channel_id.as_str(),
+                                //         message_create.id.as_str(),
+                                //         author.as_str(),
+                                //         message_create.content.as_str(),
+                                //     )
+                                //     .await
+                                // {
+                                //     Ok(_) => {}
+                                //     Err(ClientFailure(message)) => {
+                                //         println!("failed to call client tldr: {:?}", message)
+                                //     }
+                                // }
                             } else {
                                 println!(
                                     "{} - {}",
@@ -111,7 +138,7 @@ impl<T: DiscordClient> MessageProcessor<T> {
                 v => panic!("received an event with an unexpected message: {:?}\n", v),
             },
             Err(err) => match err {
-                Error::ConnectionClosed => {
+                tokio_tungstenite::tungstenite::Error::ConnectionClosed => {
                     println!("connection closed");
                 }
                 e => panic!("{}", e),
