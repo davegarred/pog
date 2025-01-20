@@ -1,7 +1,12 @@
+# build directories
 /target
 /server/build
 /client/build
 /gateway/build
 /bootstrap*
 
+# environment variables
+.env
+
+# IDE
 .idea

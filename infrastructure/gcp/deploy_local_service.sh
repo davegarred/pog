@@ -11,6 +11,9 @@ usage:
 USAGE
 }
 
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+source "${SCRIPT_DIR}/.env"
+
 if [[ $# -lt 2 ]];
 then
     usage
