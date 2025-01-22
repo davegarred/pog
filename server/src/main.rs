@@ -152,7 +152,6 @@ async fn lambda_command_handler<T: DiscordClient>(
     headers: HeaderMap,
     body: String,
 ) -> Result<Response, (StatusCode, String)> {
-    println!("{}", body);
     let result = post_handler(State(state), headers, body).await;
     reset_metric().await;
     Ok(result)
@@ -162,6 +161,7 @@ pub(crate) async fn post_handler<T: DiscordClient>(
     headers: HeaderMap,
     body: String,
 ) -> Response {
+    println!("request: {}", body);
     match route(state, headers, body).await {
         Ok(response) => {
             // metric(|mut m| m.count(SUCCESS));

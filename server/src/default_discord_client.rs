@@ -93,7 +93,7 @@ impl GcpDefaultDiscordClient {
             "Content-Type",
             "application/json; charset=UTF-8".parse().unwrap(),
         );
-        let url = format!("{}:8080/call", self.url);
+        let url = format!("{}/call", self.url);
         let response = reqwest::Client::new()
             .post(url)
             .headers(headers)
@@ -103,11 +103,12 @@ impl GcpDefaultDiscordClient {
         if response.status().is_success() {
             Ok(())
         } else {
+            let status_code = response.status();
             let msg = format!(
-                "failure to call pog client with status {}: {}",
-                response.status().to_string(),
-                response.text().await.unwrap_or(String::new())
+                "failure to call pog client with status {}",
+                status_code.to_string()
             );
+            println!("client call failed with {}\n{}", status_code, msg);
             Err(Error::ClientFailure(msg))
         }
     }

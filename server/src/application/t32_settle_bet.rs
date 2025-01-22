@@ -78,10 +78,7 @@ pub(crate) async fn close_message<C: DiscordClient>(
         .id
         .clone();
     let token = request.token.to_string();
-    if let Err(Error::ClientFailure(msg)) = client.delete_message(&message_id, &token).await {
-        println!("ERROR sending SNS: {}", msg);
-    }
-    Ok(())
+    client.delete_message(&message_id, &token).await
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -4,9 +4,14 @@ mod gemini_client;
 mod gemini_dtos;
 mod snark;
 mod tldr;
+
 use crate::discord_client::{delete_message, update_message};
 use crate::tldr::tldr;
+use axum::extract::State;
+use chrono::Local;
 use pog_common::DiscordMessage;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[tokio::main]
 #[cfg(feature = "aws")]
@@ -38,8 +43,29 @@ pub(crate) async fn payload_router(message: DiscordMessage) -> Result<(), error:
 #[cfg(feature = "gcp")]
 #[tokio::main]
 async fn main() {
-    let router = axum::Router::new().route("/call", axum::routing::post(post_handler));
-    axum::Server::bind(&"0.0.0.0:8080".parse().unwrap())
+    let state = GcpState::new();
+    let state_copy = state.clone();
+    tokio::spawn(async move {
+        loop {
+            let mut messages = state_copy.messages.lock().await;
+            for message in messages.drain(..) {
+                let name = format!("{:?}", message);
+                match payload_router(message).await {
+                    Ok(_) => {
+                        println!("processed message: {}", name)
+                    }
+                    Err(err) => {
+                        println!("failure: {:#?}\nprocessing: {}", err, name);
+                    }
+                }
+            }
+        }
+    });
+    let router = axum::Router::new()
+        .route("/call", axum::routing::post(post_handler))
+        .with_state(state);
+    println!("started at {}", Local::now().format("%Y-%m-%dT%H:%M:%S"));
+    axum::Server::bind(&"0.0.0.0:80".parse().unwrap())
         .serve(router.into_make_service())
         .await
         .unwrap();
@@ -47,14 +73,27 @@ async fn main() {
 
 #[cfg(feature = "gcp")]
 pub async fn post_handler(
+    State(state): State<GcpState>,
     axum::extract::Json(message): axum::extract::Json<DiscordMessage>,
 ) -> axum::response::Response {
-    match payload_router(message).await {
-        Ok(_) => axum::response::IntoResponse::into_response(reqwest::StatusCode::OK),
-        Err(err) => {
-            let message = format!("failure: {:#?}", err);
-            println!("{}", message);
-            axum::response::IntoResponse::into_response(reqwest::StatusCode::INTERNAL_SERVER_ERROR)
+    state.message(message).await;
+    axum::response::IntoResponse::into_response(reqwest::StatusCode::OK)
+}
+
+#[derive(Clone)]
+pub struct GcpState {
+    messages: Arc<Mutex<Vec<DiscordMessage>>>,
+}
+
+impl GcpState {
+    pub async fn message(&self, message: DiscordMessage) {
+        println!("store message for processing: {:?}", &message);
+        self.messages.lock().await.push(message);
+    }
+
+    pub fn new() -> Self {
+        Self {
+            messages: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }

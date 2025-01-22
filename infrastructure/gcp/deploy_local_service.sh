@@ -1,6 +1,12 @@
 #!/bin/bash
 # Starts up a local service under docker
 
+set -u
+
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+source "${SCRIPT_DIR}/.env"
+source "${SCRIPT_DIR}/common.sh"
+
 function usage() {
   cat >&2 << USAGE
 usage:
@@ -11,32 +17,20 @@ usage:
 USAGE
 }
 
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-source "${SCRIPT_DIR}/.env"
-
 if [[ $# -lt 2 ]];
 then
     usage
     exit 1
 fi
 
-SERVICE=$1
-ENVIRONMENT=$2
-CLIENT_LAMBDA=$3
-DB_HOST=$4
-
-DB_NAME="pog_server"
-DB_USER="pog_user"
-DB_PASS="pog_pass"
-
-DISCORD_APP_ID_KEY=pog-discord_app_id-$ENVIRONMENT
-DISCORD_APP_TOKEN_KEY=pog-discord_app_token-$ENVIRONMENT
-DISCORD_PUBLIC_KEY_KEY=pog-public_key-$ENVIRONMENT
-GEMINI_TOKEN_KEY=pog-gemini_token-$ENVIRONMENT
+SERVICE=${1}
+ENVIRONMENT=${2}
+CLIENT_LAMBDA=${3:-}
+DB_HOST=${4:-}
 
 case "$SERVICE" in
     client)
-        NETWORKING_ARGS="-p 8080:8080"
+        NETWORKING_ARGS="-p 8080:80"
         SERVICE=pog_client
         ;;
     server)
@@ -52,39 +46,17 @@ case "$SERVICE" in
         ;;
 esac
 
-
-if ! DISCORD_APP_ID=$( gcloud secrets versions access latest --secret="$DISCORD_APP_ID_KEY" )
-then
-    echo "expected secret was not found: $1"
-    exit 1
-fi
-if ! DISCORD_APP_TOKEN=$( gcloud secrets versions access latest --secret="$DISCORD_APP_TOKEN_KEY" )
-then
-    echo "expected secret was not found: $1"
-    exit 1
-fi
-if ! DISCORD_PUBLIC_KEY=$( gcloud secrets versions access latest --secret="$DISCORD_PUBLIC_KEY_KEY" )
-then
-    echo "expected secret was not found: $1"
-    exit 1
-fi
-if ! GEMINI_TOKEN=$( gcloud secrets versions access latest --secret="$GEMINI_TOKEN_KEY" )
-then
-    echo "expected secret was not found: $1"
-    exit 1
-fi
-
-docker run --rm -d \
-    -e ENVIRONMENT="$ENVIRONMENT" \
-    -e DISCORD_APPLICATION_ID="$DISCORD_APP_ID" \
-    -e APPLICATION_TOKEN="$DISCORD_APP_TOKEN" \
-    -e DISCORD_TOKEN="$DISCORD_APP_TOKEN" \
-    -e DISCORD_PUBLIC_KEY="$DISCORD_PUBLIC_KEY" \
-    -e GEMINI_TOKEN="$GEMINI_TOKEN" \
-    -e CLIENT_LAMBDA="$CLIENT_LAMBDA" \
-    -e DB_USER="$DB_USER" \
-    -e DB_PASS="$DB_PASS" \
-    -e DB_HOST="$DB_HOST" \
-    -e DB_NAME="$DB_NAME" \
-    $NETWORKING_ARGS \
-    $SERVICE
+docker run -d \
+  -e ENVIRONMENT="$ENVIRONMENT" \
+  -e DISCORD_APPLICATION_ID="${DISCORD_APPLICATION_ID}" \
+  -e APPLICATION_TOKEN="${DISCORD_TOKEN}" \
+  -e DISCORD_TOKEN="${DISCORD_TOKEN}" \
+  -e DISCORD_PUBLIC_KEY="${DISCORD_PUBLIC_KEY}" \
+  -e GEMINI_TOKEN="${GEMINI_TOKEN}" \
+  -e CLIENT_LAMBDA="${CLIENT_LAMBDA}" \
+  -e DB_USER="${DB_USER}" \
+  -e DB_PASS="${DB_PASS}" \
+  -e DB_HOST="${DB_HOST}" \
+  -e DB_NAME="${DB_NAME}" \
+  "${NETWORKING_ARGS:-}" \
+  ${SERVICE}
