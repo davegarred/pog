@@ -23,6 +23,7 @@ if [[ ${CLIENT_IP_ADDRESS} == "" ]];then
   exit 1
 fi
 CLIENT_LAMBDA="http://${CLIENT_IP_ADDRESS}"
+echo "identified client url as: ${CLIENT_LAMBDA}"
 
 gcloud run deploy "$INSTANCE_NAME" \
   --image="$IMAGE_NAME" \
