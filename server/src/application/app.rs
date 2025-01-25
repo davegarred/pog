@@ -339,10 +339,7 @@ mod test {
 
         let expected = r#"{"type":4,"data":{"content":"No bets were settled","flags":64}}"#;
         assert_response(result, expected);
-        assert_eq!(
-            Some("original message".to_string()),
-            get_client_message(&client)
-        )
+        assert_eq!(None, get_client_message(&client))
     }
 
     #[tokio::test]

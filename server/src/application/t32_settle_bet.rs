@@ -39,11 +39,12 @@ where
             Designation::Accepting => WagerStatus::AcceptingWon,
             Designation::NoBet => WagerStatus::NoBet,
             Designation::Cancel => {
+                close_message(&request, &self.client).await?;
                 return Ok(InteractionResponse::channel_message_with_source_ephemeral(
                     "No bets were settled",
                     vec![],
                     vec![],
-                ))
+                ));
             }
         };
 
