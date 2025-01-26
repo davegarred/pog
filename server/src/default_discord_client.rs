@@ -1,7 +1,6 @@
-use async_trait::async_trait;
+use crate::discord_client::DiscordClient;
 use pog_common::{Authorization, DeleteMessage, DiscordMessage};
 
-use crate::discord_client::DiscordClient;
 use crate::error::Error;
 
 #[cfg(feature = "aws")]
@@ -34,7 +33,6 @@ impl AwsDefaultDiscordClient {
 }
 
 #[cfg(feature = "aws")]
-#[async_trait]
 impl DiscordClient for AwsDefaultDiscordClient {
     async fn delete_message(&self, message_id: &str, request_token: &str) -> Result<(), Error> {
         let delete = DeleteMessage {
@@ -115,7 +113,6 @@ impl GcpDefaultDiscordClient {
 }
 
 #[cfg(feature = "gcp")]
-#[async_trait]
 impl DiscordClient for GcpDefaultDiscordClient {
     async fn delete_message(&self, message_id: &str, request_token: &str) -> Result<(), Error> {
         let message = DiscordMessage::Delete(DeleteMessage {

@@ -3,28 +3,46 @@ use discord_api::interaction_request::{
     MessageComponentInteractionData, ModalSubmitInteractionData, User,
 };
 use discord_api::interaction_response::InteractionResponse;
+use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
 
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
-use crate::repos::{AttendanceRepository, WagerRepository};
 
 #[derive(Debug, Clone)]
-pub struct Application<WR: WagerRepository, AR: AttendanceRepository, C: DiscordClient> {
+pub struct Application<
+    WR: WagerRepository,
+    AR: AttendanceRepository,
+    SR: AdminRepository,
+    UR: WhoisRepository,
+    C: DiscordClient,
+> {
     pub wager_repo: WR,
     pub attendance_repo: AR,
+    pub admin_repo: SR,
+    pub whois_repo: UR,
     pub client: C,
 }
 
-impl<WR, AR, C> Application<WR, AR, C>
+impl<WR, AR, SR, UR, C> Application<WR, AR, SR, UR, C>
 where
     WR: WagerRepository,
     AR: AttendanceRepository,
+    SR: AdminRepository,
+    UR: WhoisRepository,
     C: DiscordClient,
 {
-    pub fn new(wager_repo: WR, attendance_repo: AR, client: C) -> Self {
+    pub fn new(
+        wager_repo: WR,
+        attendance_repo: AR,
+        admin_repo: SR,
+        whois_repo: UR,
+        client: C,
+    ) -> Self {
         Self {
             wager_repo,
             attendance_repo,
+            admin_repo,
+            whois_repo,
             client,
         }
     }
@@ -103,13 +121,15 @@ mod test {
 
     use discord_api::interaction_request::InteractionObject;
     use discord_api::interaction_response::InteractionResponse;
+    use pog_common::repos::attendance_record::AttendanceRecords;
+    use pog_common::repos::{
+        AdminRepository, AdminSettings, InMemAdminRepository, InMemWagerRepository,
+        InMemWhoisRepository, InMemoryAttendanceRepository, WagerRepository, WhoisRepository,
+    };
 
     use crate::application::Application;
     use crate::discord_client::TestDiscordClient;
-    use crate::repos::{
-        AttendanceRecords, InMemWagerRepository, InMemoryAttendanceRepository, WagerRepository,
-    };
-    use crate::wager::{Wager, WagerStatus};
+    use pog_common::wager::{Wager, WagerStatus};
 
     #[tokio::test]
     async fn ping_request() {
@@ -117,6 +137,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
@@ -131,6 +153,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -149,6 +173,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
         let result = app.request_handler(request).await.unwrap();
@@ -166,6 +192,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -199,6 +227,8 @@ mod test {
         let app = Application::new(
             repo,
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -218,6 +248,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -252,6 +284,8 @@ mod test {
         let app = Application::new(
             repository,
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -267,6 +301,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -299,6 +335,8 @@ mod test {
         let app = Application::new(
             repo,
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             client.clone(),
         );
 
@@ -332,6 +370,8 @@ mod test {
         let app = Application::new(
             repo,
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             client.clone(),
         );
 
@@ -365,6 +405,8 @@ mod test {
         let app = Application::new(
             repo,
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             client.clone(),
         );
 
@@ -381,6 +423,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -399,6 +443,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             test_attendance_repo(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -417,6 +463,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             test_attendance_repo(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -435,6 +483,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             test_attendance_repo(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -453,6 +503,8 @@ mod test {
         let app = Application::new(
             InMemWagerRepository::default(),
             test_attendance_repo(),
+            test_admin_repo().await,
+            test_whois_repo().await,
             TestDiscordClient::default(),
         );
 
@@ -462,6 +514,63 @@ mod test {
         assert_eq!(
             found,
             "{\"type\":4,\"data\":{\"content\":\"No information for week 19\",\"flags\":64}}"
+        );
+    }
+
+    #[tokio::test]
+    async fn t60_admin_help() {
+        let request = expect_request_from("dto_payloads/T60_admin_help.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            test_attendance_repo(),
+            test_admin_repo().await,
+            test_whois_repo().await,
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            found,
+            r##"{"type":4,"data":{"embeds":[{"title":"POG Admin help","type":"rich","description":"Admin-only commands","fields":[{"name":"Place a bet","value":"`/whois` gets the human and hash name for a user\n","inline":false},{"name":"Show bets","value":"`/welcome_channel` sets the expected landing page for new users.\n","inline":false}]}],"flags":64}}"##
+        );
+    }
+
+    // #[tokio::test]
+    async fn t60_admin_welcome() {
+        let request = expect_request_from("dto_payloads/T60_admin_welcome.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            test_attendance_repo(),
+            test_admin_repo().await,
+            test_whois_repo().await,
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(found, r##"{}"##);
+    }
+
+    #[tokio::test]
+    async fn t60_admin_whois() {
+        let request = expect_request_from("dto_payloads/T60_admin_whois.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            test_attendance_repo(),
+            test_admin_repo().await,
+            test_whois_repo().await,
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            found,
+            r###"{"type":4,"data":{"content":"_User lookup_\n<@695398918694895710>\nHuman name: Dave\nHash name: FBS","flags":64}}"###
         );
     }
 
@@ -500,6 +609,23 @@ mod test {
             combined_attendance,
             weekly_attendance,
         }
+    }
+
+    async fn test_admin_repo() -> InMemAdminRepository {
+        let mut repo = InMemAdminRepository::default();
+        repo.update(AdminSettings {
+            welcome_channel: "123456789".to_string(),
+            ff_year: 2024,
+            ff_week: 18,
+        })
+        .await
+        .unwrap();
+        repo
+    }
+    async fn test_whois_repo() -> InMemWhoisRepository {
+        let mut repo = InMemWhoisRepository::default();
+        repo.add(695398918694895710, "Dave", "FBS").await.unwrap();
+        repo
     }
 
     fn expect_request_from(filename: &str) -> InteractionObject {

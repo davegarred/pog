@@ -26,6 +26,7 @@ pub struct ApplicationCommandOptions {
     required: bool,
 }
 
+// https://discord.com/developers/docs/interactions/application-commands
 impl ApplicationCommand {
     pub fn create_bet() -> Self {
         Self {
@@ -103,7 +104,20 @@ impl ApplicationCommand {
             command_type: 1,
             name: ADMIN_COMMAND.to_string(),
             description: "POG admin tool".to_string(),
-            options: None,
+            options: Some(vec![
+                ApplicationCommandOptions {
+                    command_type: 6,
+                    name: "whois".to_string(),
+                    description: "Lookup a user".to_string(),
+                    required: false,
+                },
+                ApplicationCommandOptions {
+                    command_type: 7,
+                    name: "welcome_channel".to_string(),
+                    description: "Set the welcome channel".to_string(),
+                    required: false,
+                },
+            ]),
         }
     }
 }

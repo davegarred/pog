@@ -1,16 +1,18 @@
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
-use crate::discord_id::DiscordId;
 use crate::error::Error;
-use crate::repos::{AttendanceRepository, WagerRepository};
 use discord_api::interaction_request::ApplicationCommandInteractionData;
 use discord_api::interaction_response::InteractionResponse;
 use discord_api::InteractionError;
+use pog_common::discord_id::DiscordId;
+use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
 
-impl<WR, AR, C> Application<WR, AR, C>
+impl<WR, AR, SR, UR, C> Application<WR, AR, SR, UR, C>
 where
     WR: WagerRepository,
     AR: AttendanceRepository,
+    SR: AdminRepository,
+    UR: WhoisRepository,
     C: DiscordClient,
 {
     pub async fn list_bets(

@@ -1,11 +1,11 @@
-use chrono::Local;
-use std::sync::Mutex;
-
 use crate::heartbeat::heartbeat;
 use crate::inbound_payloads::GetGateway;
 use crate::message_processor::MessageProcessor;
+use chrono::Local;
 use futures_util::{future, pin_mut, StreamExt};
+use pog_common::repos::{new_db_pool, AdminRepository, PostgresAdminRepository};
 use pog_common::Authorization;
+use std::sync::{Arc, Mutex};
 
 mod error;
 mod gemini_client;
@@ -32,7 +32,40 @@ async fn main() {
     let gemini_token =
         std::env::var("GEMINI_TOKEN").expect("finding Gemini token from environment");
 
-    println!("started at {}", Local::now().format("%Y-%m-%dT%H:%M:%S"));
+    let db_user = std::env::var("DB_USER").expect("finding db user from environment");
+    let db_pass = std::env::var("DB_PASS").expect("finding db pass from environment");
+    let db_name = std::env::var("DB_NAME").expect("finding db name from environment");
+    let db_host = std::env::var("DB_HOST").expect("finding db host from environment");
+    let db_connection = format!(
+        "postgresql://{}:{}@{}:5432/{}",
+        db_user, db_pass, db_host, db_name
+    );
+    let db_pool = new_db_pool(&db_connection).await;
+    let admin_repo = PostgresAdminRepository::new(db_pool.clone());
+    let settings = Arc::new(Mutex::new(
+        admin_repo
+            .get()
+            .await
+            .expect("unable to find admin settings"),
+    ));
+    let settings_copy = settings.clone();
+
+    tokio::spawn(async move {
+        loop {
+            let settings = admin_repo
+                .get()
+                .await
+                .expect("unable to find admin settings");
+            *settings_copy.lock().expect("can't get settings mutex") = settings;
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+    });
+
+    println!(
+        "started at {}, welcome channel - {}",
+        Local::now().format("%Y-%m-%dT%H:%M:%S"),
+        &settings.lock().unwrap().welcome_channel
+    );
     let resume_gateway = get_gateway().await;
 
     let (internal_tx, internal_rx) = futures_channel::mpsc::unbounded();
@@ -44,6 +77,7 @@ async fn main() {
         discord_token,
         authorization,
         gemini_token,
+        settings,
         stdin_tx,
         internal_tx,
     ));

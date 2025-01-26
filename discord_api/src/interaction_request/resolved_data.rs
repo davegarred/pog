@@ -6,14 +6,15 @@ use std::collections::HashMap;
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct ResolvedData {
-    pub users: HashMap<String, User>,
+    pub users: Option<HashMap<String, User>>,
 }
 
 impl ResolvedData {
     pub fn expect_user(&self, id: &str) -> Result<&User, InteractionError> {
-        match self.users.get(id) {
-            Some(user) => Ok(user),
-            None => Err(("ResolvedData", format!("user: {}", id).as_str()).into()),
+        if let Some(user) = self.users.as_ref().and_then(|users| users.get(id)) {
+            Ok(user)
+        } else {
+            Err(("ResolvedData", format!("user: {}", id).as_str()).into())
         }
     }
 }

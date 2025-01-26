@@ -7,41 +7,61 @@
   "channel": {
     "flags": 0,
     "guild_id": "1150922826463846521",
-    "id": "1165639175018651688",
-    "last_message_id": "1282791736682348564",
-    "name": "wagers",
+    "id": "1323703455595888793",
+    "last_message_id": "1332498429229666316",
+    "name": "tldr-drag",
     "nsfw": false,
     "parent_id": "1150922826463846522",
     "permissions": "2251799813685247",
-    "position": 2,
+    "position": 4,
     "rate_limit_per_user": 0,
     "topic": null,
     "type": 0
   },
-  "channel_id": "1165639175018651688",
+  "channel_id": "1323703455595888793",
   "context": 0,
   "data": {
-    "id": "1177991404853669991",
-    "name": "attendance",
+    "id": "1326309955745349836",
+    "name": "pog_admin",
     "options": [
       {
-        "name": "week",
-        "type": 3,
-        "value": "1"
+        "name": "welcome_channel",
+        "type": 7,
+        "value": "1165637665908080730"
       }
     ],
+    "resolved": {
+      "channels": {
+        "1165637665908080730": {
+          "flags": 0,
+          "guild_id": "1150922826463846521",
+          "id": "1165637665908080730",
+          "last_message_id": "1326337320210927748",
+          "name": "welcome",
+          "nsfw": false,
+          "parent_id": "1150922826463846522",
+          "permissions": "2251799813685247",
+          "position": 1,
+          "rate_limit_per_user": 0,
+          "topic": null,
+          "type": 0
+        }
+      }
+    },
     "type": 1
   },
   "entitlement_sku_ids": [],
   "entitlements": [],
   "guild": {
-    "features": [],
+    "features": [
+      "ENABLED_MODERATION_EXPERIENCE_FOR_NON_COMMUNITY"
+    ],
     "id": "1150922826463846521",
     "locale": "en-US"
   },
   "guild_id": "1150922826463846521",
   "guild_locale": "en-US",
-  "id": "1282804600885350410",
+  "id": "1333609660552450128",
   "locale": "en-US",
   "member": {
     "avatar": null,
@@ -64,6 +84,7 @@
       "discriminator": "0",
       "global_name": "Harx",
       "id": "695398918694895710",
+      "primary_guild": null,
       "public_flags": 0,
       "username": "harx6401"
     }

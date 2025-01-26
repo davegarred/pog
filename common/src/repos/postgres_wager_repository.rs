@@ -1,11 +1,8 @@
+use crate::discord_id::DiscordId;
+use crate::error::Error;
 use futures::TryStreamExt;
 use sqlx::postgres::PgRow;
 use sqlx::{Pool, Postgres, Row, Transaction};
-
-use crate::discord_id::DiscordId;
-use crate::error::Error;
-use crate::repos::WagerRepository;
-use crate::wager::{Wager, WagerStatus};
 
 const INSERT_WAGER: &str = r#"INSERT INTO wagers(wager_id,time,offering,resolved_offering_user,accepting,resolved_accepting_user,wager,outcome,status,expected_settle_date)
         VALUES (nextval('seq_wager_id'), $1, $2, $3, $4, $5, $6, $7, $8, $9)"#;
@@ -27,7 +24,9 @@ impl PostgresWagerRepo {
     }
 }
 
-#[async_trait::async_trait]
+use crate::repos::WagerRepository;
+use crate::wager::{Wager, WagerStatus};
+
 impl WagerRepository for PostgresWagerRepo {
     async fn insert(&self, wager: Wager) -> Result<(), Error> {
         let resolved_offering_user: Option<i64> = wager.resolved_offering_user.map(|v| v.value());
@@ -50,7 +49,7 @@ impl WagerRepository for PostgresWagerRepo {
             1 => Ok(()),
             num => {
                 let msg = format!("attempt to insert wager submitted {} lines", num);
-                Err(Error::DatabaseFailure(msg))
+                Err(Error::Database(msg))
             }
         }
     }
@@ -129,12 +128,11 @@ fn row_to_wager(row: PgRow) -> Wager {
 }
 
 #[cfg(test)]
-#[cfg(feature = "integration-test")]
+#[cfg(feature = "integration-tests")]
 mod test {
     use chrono::NaiveDate;
 
-    use crate::repos::WagerRepository;
-    use crate::repos::{new_db_pool, PostgresWagerRepo};
+    use crate::repos::{new_db_pool, PostgresWagerRepo, WagerRepository};
     use crate::wager::{Wager, WagerStatus};
 
     #[tokio::test]

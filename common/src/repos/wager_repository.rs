@@ -1,15 +1,22 @@
 use crate::discord_id::DiscordId;
 use crate::error::Error;
 use crate::wager::{Wager, WagerStatus};
+use std::future::Future;
 use std::sync::{Arc, Mutex};
 
-#[async_trait::async_trait]
 pub trait WagerRepository: std::fmt::Debug {
-    async fn insert(&self, wager: Wager) -> Result<(), Error>;
-    async fn get(&self, wager_id: i32) -> Option<Wager>;
-    async fn search_by_user_id(&self, user_id: &DiscordId) -> Result<Vec<Wager>, Error>;
-    async fn search_by_user(&self, user: &str) -> Result<Vec<Wager>, Error>;
-    async fn update_status(&self, wager_id: i32, wager: &Wager) -> Result<(), Error>;
+    fn insert(&self, wager: Wager) -> impl Future<Output = Result<(), Error>> + Send;
+    fn get(&self, wager_id: i32) -> impl Future<Output = Option<Wager>> + Send;
+    fn search_by_user_id(
+        &self,
+        user_id: &DiscordId,
+    ) -> impl Future<Output = Result<Vec<Wager>, Error>> + Send;
+    fn search_by_user(&self, user: &str) -> impl Future<Output = Result<Vec<Wager>, Error>> + Send;
+    fn update_status(
+        &self,
+        wager_id: i32,
+        wager: &Wager,
+    ) -> impl Future<Output = Result<(), Error>> + Send;
 }
 
 #[derive(Debug, Default, Clone)]
@@ -17,7 +24,6 @@ pub struct InMemWagerRepository {
     wagers: Arc<Mutex<Vec<Wager>>>,
 }
 
-#[async_trait::async_trait]
 impl WagerRepository for InMemWagerRepository {
     async fn insert(&self, wager: Wager) -> Result<(), Error> {
         self.wagers.lock().unwrap().push(wager);

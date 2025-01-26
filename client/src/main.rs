@@ -7,8 +7,6 @@ mod tldr;
 
 use crate::discord_client::{delete_message, update_message};
 use crate::tldr::tldr;
-use axum::extract::State;
-use chrono::Local;
 use pog_common::DiscordMessage;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -59,12 +57,16 @@ async fn main() {
                     }
                 }
             }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         }
     });
     let router = axum::Router::new()
         .route("/call", axum::routing::post(post_handler))
         .with_state(state);
-    println!("started at {}", Local::now().format("%Y-%m-%dT%H:%M:%S"));
+    println!(
+        "started at {}",
+        chrono::Local::now().format("%Y-%m-%dT%H:%M:%S")
+    );
     axum::Server::bind(&"0.0.0.0:80".parse().unwrap())
         .serve(router.into_make_service())
         .await
@@ -73,7 +75,7 @@ async fn main() {
 
 #[cfg(feature = "gcp")]
 pub async fn post_handler(
-    State(state): State<GcpState>,
+    axum::extract::State(state): axum::extract::State<GcpState>,
     axum::extract::Json(message): axum::extract::Json<DiscordMessage>,
 ) -> axum::response::Response {
     state.message(message).await;

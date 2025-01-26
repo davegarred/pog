@@ -6,15 +6,17 @@ use discord_api::InteractionError;
 
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
-use crate::discord_id::{combine_user_payload, DiscordId};
 use crate::error::Error;
-use crate::repos::{AttendanceRepository, WagerRepository};
 use crate::ADD_BET_PLACEHOLDER_TEXT;
+use pog_common::discord_id::{combine_user_payload, DiscordId};
+use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
 
-impl<WR, AR, C> Application<WR, AR, C>
+impl<WR, AR, SR, UR, C> Application<WR, AR, SR, UR, C>
 where
     WR: WagerRepository,
     AR: AttendanceRepository,
+    SR: AdminRepository,
+    UR: WhoisRepository,
     C: DiscordClient,
 {
     pub async fn initiate_bet(

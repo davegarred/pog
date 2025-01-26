@@ -2,6 +2,7 @@
 name = "gateway"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.79.0"
 
 [dependencies]
 pog_common = "0.1.0"
@@ -16,8 +17,8 @@ tokio-tungstenite = { version = "0.21.0", features = ["rustls-tls-native-roots"]
 futures-channel = "0.3.29"
 futures-util = "0.3.29"
 chrono = "0.4.35"
-async-trait = "0.1.79"
 rand = "0.8.5"
+
 
 aws-config = { version = "0.57.1", optional = true }
 aws-sdk-lambda = { version = "0.35.1", optional = true }
@@ -25,3 +26,4 @@ aws-sdk-lambda = { version = "0.35.1", optional = true }
 [features]
 aws = [ "aws-config", "aws-sdk-lambda" ]
 gcp = [ ]
+integration-tests = []

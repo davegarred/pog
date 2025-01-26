@@ -3,9 +3,12 @@ use crate::heartbeat::WebsocketUpdate;
 use crate::inbound_payloads::{InboundEvent, InboundPayload};
 use crate::payloads::DiscordGatewayResponse;
 use crate::tldr;
+use crate::tldr::create_message;
 use crate::TLDR_MESSAGE_LENGTH;
 use futures_channel::mpsc::UnboundedSender;
-use pog_common::{Authorization, TlDrMessage};
+use pog_common::repos::AdminSettings;
+use pog_common::{Authorization, CreateMessage, TlDrMessage};
+use std::sync::{Arc, Mutex};
 use tokio_tungstenite::tungstenite::Message;
 
 pub struct MessageProcessor {
@@ -14,6 +17,7 @@ pub struct MessageProcessor {
     session_id: Option<String>,
     authorization: Authorization,
     gemini_token: String,
+    settings: Arc<Mutex<AdminSettings>>,
     sender: UnboundedSender<Message>,
     internal_tx: UnboundedSender<WebsocketUpdate>,
 }
@@ -24,6 +28,7 @@ impl MessageProcessor {
         discord_token: String,
         authorization: Authorization,
         gemini_token: String,
+        settings: Arc<Mutex<AdminSettings>>,
         sender: UnboundedSender<Message>,
         internal_tx: UnboundedSender<WebsocketUpdate>,
     ) -> Self {
@@ -33,6 +38,7 @@ impl MessageProcessor {
             session_id: None,
             authorization,
             gemini_token,
+            settings,
             sender,
             internal_tx,
         }
@@ -112,11 +118,34 @@ impl MessageProcessor {
                             let user = member_add
                                 .user
                                 .expect("member add message did not come with a user");
-                            println!(
-                                "TODO: send a welcome note to: {} - @{}",
-                                user.global_name.expect("new user missing a global name"),
-                                user.id
+                            let channel_id = self
+                                .settings
+                                .lock()
+                                .expect("could not unlock admin settings")
+                                .welcome_channel
+                                .clone();
+                            if &channel_id == "" {
+                                return;
+                            }
+                            let name = match user.global_name {
+                                None => user.username,
+                                Some(name) => name,
+                            };
+                            let message = format!(
+                                "Welcome to the Greenwood Discord {}!\nPlease introduce yourself.",
+                                name
                             );
+                            println!("channel ({}), send message: {}", channel_id, message);
+                            if let Err(err) = create_message(CreateMessage {
+                                authorization: self.authorization.clone(),
+                                channel_id,
+                                message,
+                                message_reference: None,
+                            })
+                            .await
+                            {
+                                println!("error sending message: {:?}", err);
+                            };
                         }
                         InboundEvent::MessageDelete(_) => {}
                         InboundEvent::MessageReactionAdd(_) => {}

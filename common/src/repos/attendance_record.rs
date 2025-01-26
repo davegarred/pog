@@ -1,7 +1,6 @@
+use crate::discord_id::DiscordId;
 use sqlx::postgres::PgRow;
 use sqlx::Row;
-
-use crate::discord_id::DiscordId;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AttendanceRecords(pub Vec<AttendanceRecord>);
