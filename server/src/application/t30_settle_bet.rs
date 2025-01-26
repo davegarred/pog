@@ -3,15 +3,17 @@ use discord_api::interaction_response::{Component, InteractionResponse, SelectMe
 
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
-use crate::discord_id::DiscordId;
 use crate::error::Error;
-use crate::repos::{AttendanceRepository, WagerRepository};
-use crate::wager::Wager;
+use pog_common::discord_id::DiscordId;
+use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
+use pog_common::wager::Wager;
 
-impl<WR, AR, C> Application<WR, AR, C>
+impl<WR, AR, SR, UR, C> Application<WR, AR, SR, UR, C>
 where
     WR: WagerRepository,
     AR: AttendanceRepository,
+    SR: AdminRepository,
+    UR: WhoisRepository,
     C: DiscordClient,
 {
     pub async fn pay_bet(

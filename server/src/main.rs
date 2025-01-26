@@ -6,20 +6,20 @@ use axum::Router;
 use discord_api::interaction_request::InteractionObject;
 use discord_api::interaction_response::InteractionResponse;
 
-use crate::repos::{new_db_pool, PostgresAttendanceRepository, PostgresWagerRepo};
 use crate::verify::VerifyTool;
+use pog_common::repos::{
+    new_db_pool, PostgresAdminRepository, PostgresAttendanceRepository, PostgresWagerRepo,
+    PostgresWhoisRepository,
+};
 
 mod application;
 mod default_discord_client;
 mod discord_client;
-mod discord_id;
 mod error;
 #[cfg(feature = "aws")]
 mod observe;
-mod repos;
 mod response;
 mod verify;
-mod wager;
 
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
@@ -60,14 +60,14 @@ async fn main() -> Result<(), Error> {
     // TODO: move these to AWS secrets
     let db_user = std::env::var("DB_USER").expect("finding db user from environment");
     let db_pass = std::env::var("DB_PASS").expect("finding db pass from environment");
+    let db_name = std::env::var("DB_NAME").expect("finding db name from environment");
+    let db_host = std::env::var("DB_HOST").expect("finding db host from environment");
     let application_token = std::env::var("DISCORD_TOKEN").expect("finding token from environment");
 
     let public_key =
         std::env::var("DISCORD_PUBLIC_KEY").expect("finding public key from environment");
     let application_id =
         std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
-    let db_name = std::env::var("DB_NAME").expect("finding db name from environment");
-    let db_host = std::env::var("DB_HOST").expect("finding db host from environment");
     let client_lambda = std::env::var("CLIENT_LAMBDA").expect("finding client lambda name");
     let db_connection = format!(
         "postgresql://{}:{}@{}:5432/{}",
@@ -75,7 +75,9 @@ async fn main() -> Result<(), Error> {
     );
     let db_pool = new_db_pool(&db_connection).await;
     let wager_repo = PostgresWagerRepo::new(db_pool.clone());
-    let attendance_repo = PostgresAttendanceRepository::new(db_pool);
+    let attendance_repo = PostgresAttendanceRepository::new(db_pool.clone());
+    let admin_repo = PostgresAdminRepository::new(db_pool.clone());
+    let whois_repo = PostgresWhoisRepository::new(db_pool.clone());
 
     #[cfg(feature = "aws")]
     {
@@ -94,7 +96,8 @@ async fn main() -> Result<(), Error> {
             client_lambda,
         )
         .await;
-        let application = Application::new(wager_repo, attendance_repo, client);
+        let application =
+            Application::new(wager_repo, attendance_repo, admin_repo, whois_repo, client);
         let state = AppState {
             verifier: VerifyTool::new(&public_key),
             application,
@@ -118,7 +121,8 @@ async fn main() -> Result<(), Error> {
             client_lambda,
         )
         .await;
-        let application = Application::new(wager_repo, attendance_repo, client);
+        let application =
+            Application::new(wager_repo, attendance_repo, admin_repo, whois_repo, client);
         let state = AppState {
             verifier: VerifyTool::new(&public_key),
             application,
@@ -188,6 +192,10 @@ pub(crate) async fn post_handler<T: DiscordClient>(
                 // metric(|mut m| m.count(UNEXPECTED_REQUEST_PAYLOAD));
                 str_response("not a user in this channel".into()).into_response()
             }
+            Error::Unexpected(message) => {
+                println!("ERROR Client failure: {}", message);
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
         },
     }
 }
@@ -224,5 +232,11 @@ async fn route<T: DiscordClient>(
 #[derive(Debug, Clone)]
 struct AppState<T: DiscordClient> {
     pub verifier: VerifyTool,
-    pub application: Application<PostgresWagerRepo, PostgresAttendanceRepository, T>,
+    pub application: Application<
+        PostgresWagerRepo,
+        PostgresAttendanceRepository,
+        PostgresAdminRepository,
+        PostgresWhoisRepository,
+        T,
+    >,
 }

@@ -12,4 +12,8 @@ pub const DISCORD_API_ROOT: &str = "https://discord.com/api/v10";
 
 mod commands;
 mod discord_client;
+pub mod discord_id;
+pub mod error;
 mod events;
+pub mod repos;
+pub mod wager;

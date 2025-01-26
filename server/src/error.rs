@@ -9,11 +9,21 @@ pub enum Error {
     Invalid(String),
     DatabaseFailure(String),
     UnresolvedDiscordUser,
+    Unexpected(String),
 }
 
 impl From<&str> for Error {
     fn from(value: &str) -> Self {
         Self::Invalid(value.to_string())
+    }
+}
+
+impl From<pog_common::error::Error> for Error {
+    fn from(err: pog_common::error::Error) -> Self {
+        match err {
+            pog_common::error::Error::Unexpected(msg) => Error::Unexpected(msg),
+            pog_common::error::Error::Database(msg) => Error::DatabaseFailure(msg),
+        }
     }
 }
 
@@ -24,12 +34,6 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
-
-impl From<sqlx::Error> for Error {
-    fn from(value: sqlx::Error) -> Self {
-        Error::DatabaseFailure(value.to_string())
-    }
-}
 
 impl From<InteractionError> for Error {
     fn from(error: InteractionError) -> Self {

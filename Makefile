@@ -14,10 +14,10 @@ prepare:
 	sudo apt install musl-tools
 
 test_aws:
-	cargo test --features integration-test --features aws
+	cargo test --features integration-tests --features aws
 
 test_gcp:
-	cargo test --features integration-test --features gcp
+	cargo test --features integration-tests --features gcp
 
 check:
 	cargo audit

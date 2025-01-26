@@ -1,17 +1,19 @@
 use crate::application::parse_date::parse_date;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
-use crate::discord_id::{split_combined_user_payload, DiscordId};
 use crate::error::Error;
-use crate::repos::{AttendanceRepository, WagerRepository};
-use crate::wager::{Wager, WagerStatus};
 use discord_api::interaction_request::{ModalSubmitInteractionData, User};
 use discord_api::interaction_response::InteractionResponse;
+use pog_common::discord_id::{split_combined_user_payload, DiscordId};
+use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
+use pog_common::wager::{Wager, WagerStatus};
 
-impl<WR, AR, C> Application<WR, AR, C>
+impl<WR, AR, SR, UR, C> Application<WR, AR, SR, UR, C>
 where
     WR: WagerRepository,
     AR: AttendanceRepository,
+    SR: AdminRepository,
+    UR: WhoisRepository,
     C: DiscordClient,
 {
     pub async fn add_wager(

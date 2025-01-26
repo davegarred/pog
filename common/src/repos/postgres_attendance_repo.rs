@@ -1,9 +1,8 @@
 use crate::discord_id::DiscordId;
-use sqlx::{Pool, Postgres};
-
 use crate::error::Error;
 use crate::repos::attendance_record::{AttendanceRecords, WeeklyAttendanceRecord};
 use crate::repos::AttendanceRepository;
+use sqlx::{Pool, Postgres};
 
 const COMBINED_ATTENDANCE_QUERY: &str = r#"
 SELECT ow.owner    owner,
@@ -44,7 +43,6 @@ impl PostgresAttendanceRepository {
     }
 }
 
-#[async_trait::async_trait]
 impl AttendanceRepository for PostgresAttendanceRepository {
     async fn combined_attendance(&self) -> Result<AttendanceRecords, Error> {
         let mut result = Vec::default();
@@ -74,10 +72,9 @@ impl AttendanceRepository for PostgresAttendanceRepository {
 }
 
 #[cfg(test)]
-#[cfg(feature = "integration-test")]
+#[cfg(feature = "integration-tests")]
 mod test {
-    use crate::repos::new_db_pool;
-    use crate::repos::{AttendanceRepository, PostgresAttendanceRepository};
+    use crate::repos::{new_db_pool, AttendanceRepository, PostgresAttendanceRepository};
 
     #[tokio::test]
     async fn combined_attendance() {

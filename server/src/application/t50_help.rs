@@ -5,7 +5,7 @@ use discord_api::interaction_response::{
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
-use crate::repos::{AttendanceRepository, WagerRepository};
+use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
 
 const ATTENDANCE_DESCRIPTION: &str = r###"`/attendance` provides attendance data for others in the league.
 - Specify a `manager` to see the attendance record for a manager
@@ -36,10 +36,12 @@ A modal will pop-up after the command is sent, select the wager that you wish to
 This feature only works in the `degenerate-gambling` channel.
 "###;
 
-impl<WR, AR, C> Application<WR, AR, C>
+impl<WR, AR, SR, UR, C> Application<WR, AR, SR, UR, C>
 where
     WR: WagerRepository,
     AR: AttendanceRepository,
+    SR: AdminRepository,
+    UR: WhoisRepository,
     C: DiscordClient,
 {
     pub async fn help(&self) -> Result<InteractionResponse, Error> {
