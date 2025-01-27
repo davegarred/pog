@@ -42,5 +42,6 @@ gcloud run deploy "$INSTANCE_NAME" \
   --set-env-vars=DISCORD_TOKEN="${DISCORD_TOKEN}" \
   --set-env-vars=ENVIRONMENT="${ENVIRONMENT}" \
   --set-env-vars=RUST_BACKTRACE=1 \
+  --no-cpu-throttling \
   --set-cloudsql-instances=personal-cloud-352317:us-central1:garred-personal \
   --region=us-central1
