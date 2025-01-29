@@ -13,11 +13,6 @@ prepare:
 	rustup target add  x86_64-unknown-linux-musl
 	sudo apt install musl-tools
 
-test_aws:
-	cargo test --features integration-tests --features aws
-
-test_gcp:
-	cargo test --features integration-tests --features gcp
 
 check:
 	cargo audit
@@ -34,6 +29,14 @@ build_gcp:
 	cargo build --release --features gcp --bin pog_client
 	cargo build --release --features gcp --bin gateway
 	cargo build --release --bin commands
+
+test_aws: build_aws
+	cargo test --features integration-tests --features aws
+
+test_gcp: build_gcp
+	cargo test --features integration-tests --features gcp
+
+package_gcp: build_gcp
 	mkdir -p server/build
 	mkdir -p client/build
 	mkdir -p gateway/build
@@ -55,7 +58,7 @@ deploy_aws: check-bucket test_aws build_aws
 	aws s3 cp target/release/gateway s3://$(POG_BUCKET)/gateway
 	echo "deployed code to POG_BUCKET=$(POG_BUCKET)"
 
-deploy_gcp: check-gcp test_gcp build_gcp
+deploy_gcp: check-gcp test_gcp package_gcp
 	docker tag pog_server $(POG_REPO)/pog_server:latest
 	docker tag pog_client $(POG_REPO)/pog_client:latest
 	docker tag pog_gateway $(POG_REPO)/pog_gateway:latest
