@@ -124,7 +124,7 @@ impl MessageProcessor {
                                 .expect("could not unlock admin settings")
                                 .welcome_channel
                                 .clone();
-                            if &channel_id == "" {
+                            if channel_id.is_empty() {
                                 return;
                             }
                             let name = match user.global_name {

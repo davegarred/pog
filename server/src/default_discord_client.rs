@@ -102,10 +102,7 @@ impl GcpDefaultDiscordClient {
             Ok(())
         } else {
             let status_code = response.status();
-            let msg = format!(
-                "failure to call pog client with status {}",
-                status_code.to_string()
-            );
+            let msg = format!("failure to call pog client with status {}", status_code);
             println!("client call failed with {}\n{}", status_code, msg);
             Err(Error::ClientFailure(msg))
         }

@@ -10,7 +10,7 @@ use crate::interaction_request::resolved_data::ResolvedData;
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct InteractionDataPayload {
-    pub id: Option<String>,
+    // pub id: Option<String>,
     pub name: Option<String>,
     #[serde(rename = "type")]
     pub interaction_type: Option<u8>,
@@ -40,10 +40,6 @@ impl InteractionDataPayload {
     }
 
     fn command_transform(&self) -> Result<InteractionData, InteractionError> {
-        let id = self
-            .id
-            .clone()
-            .ok_or::<InteractionError>(("InteractionData", "id").into())?;
         let name = self
             .name
             .clone()
@@ -53,7 +49,7 @@ impl InteractionDataPayload {
             .ok_or::<InteractionError>(("InteractionData", "type").into())?;
         Ok(InteractionData::Command(
             ApplicationCommandInteractionData {
-                id,
+                // id,
                 name,
                 interaction_type,
                 resolved: self.resolved.clone(),
@@ -102,7 +98,7 @@ pub enum InteractionData {
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-data-structure
 #[derive(PartialEq, Clone, Debug)]
 pub struct ApplicationCommandInteractionData {
-    pub id: String,
+    // pub id: String,
     pub name: String,
     pub interaction_type: u8,
     pub resolved: Option<ResolvedData>,
@@ -186,7 +182,7 @@ mod test {
     #[test]
     fn ping() {
         let data = InteractionDataPayload {
-            id: None,
+            // id: None,
             name: None,
             interaction_type: None,
             resolved: None,
@@ -217,7 +213,7 @@ mod test {
         assert_eq!(
             data,
             InteractionData::Command(ApplicationCommandInteractionData {
-                id: "1165494543471353916".to_string(),
+                // id: "1165494543471353916".to_string(),
                 name: "bet".to_string(),
                 interaction_type: 1,
                 resolved: None,

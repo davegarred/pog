@@ -39,7 +39,14 @@ pub struct DiscordGatewayIdentify {
 
 impl DiscordGatewayIdentify {
     pub fn new(token: &str) -> Self {
-        let intents = 1 << 1 | 1 << 9 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15;
+        let intents = (1 << 1)
+            | (1 << 9)
+            | (1 << 10)
+            | (1 << 11)
+            | (1 << 12)
+            | (1 << 13)
+            | (1 << 14)
+            | (1 << 15);
         Self {
             token: token.to_string(),
             properties: Default::default(),

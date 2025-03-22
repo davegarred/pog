@@ -313,6 +313,11 @@ mod test {
     }
 
     #[tokio::test]
+    async fn bug_2025_03_20() {
+        expect_request_from("dto_payloads/2025_03_20_settlement_bug.json");
+    }
+
+    #[tokio::test]
     async fn t31_selected_bet_to_close_request() {
         let request = expect_request_from("dto_payloads/T31_selected_bet_to_close_request.json");
         let repo = InMemWagerRepository::default();
@@ -612,7 +617,7 @@ mod test {
     }
 
     async fn test_admin_repo() -> InMemAdminRepository {
-        let mut repo = InMemAdminRepository::default();
+        let repo = InMemAdminRepository::default();
         repo.update(AdminSettings {
             welcome_channel: "123456789".to_string(),
             ff_year: 2024,
@@ -623,7 +628,7 @@ mod test {
         repo
     }
     async fn test_whois_repo() -> InMemWhoisRepository {
-        let mut repo = InMemWhoisRepository::default();
+        let repo = InMemWhoisRepository::default();
         repo.add(695398918694895710, "Dave", "FBS").await.unwrap();
         repo
     }

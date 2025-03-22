@@ -9,7 +9,7 @@ use crate::interaction_request::user::User;
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct InteractionObject {
-    pub id: String,
+    // pub id: String,
     pub application_id: String,
     #[serde(rename = "type")]
     pub interaction_type: u8,

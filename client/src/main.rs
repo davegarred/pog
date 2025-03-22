@@ -41,7 +41,7 @@ pub(crate) async fn payload_router(message: DiscordMessage) -> Result<(), error:
 #[cfg(feature = "gcp")]
 #[tokio::main]
 async fn main() {
-    let state = GcpState::new();
+    let state = GcpState::default();
     let state_copy = state.clone();
     tokio::spawn(async move {
         loop {
@@ -82,7 +82,7 @@ pub async fn post_handler(
     axum::response::IntoResponse::into_response(reqwest::StatusCode::OK)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct GcpState {
     messages: Arc<Mutex<Vec<DiscordMessage>>>,
 }
@@ -91,11 +91,5 @@ impl GcpState {
     pub async fn message(&self, message: DiscordMessage) {
         println!("store message for processing: {:?}", &message);
         self.messages.lock().await.push(message);
-    }
-
-    pub fn new() -> Self {
-        Self {
-            messages: Arc::new(Mutex::new(Vec::new())),
-        }
     }
 }
