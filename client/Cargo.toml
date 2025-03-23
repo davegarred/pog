@@ -18,6 +18,8 @@ rand = "0.8.5"
 axum = {  version = "0.6.20", optional = true }
 tower = { version = "0.4", optional = true }
 tower-http = {  version = "0.4", optional = true }
+
 [features]
+default = ["gcp"]
 aws = [ "aws_lambda_events", "lambda_runtime" ]
 gcp = [ "axum", "tower", "tower-http", "tokio/rt-multi-thread" ]

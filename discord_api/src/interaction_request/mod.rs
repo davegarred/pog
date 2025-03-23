@@ -19,6 +19,10 @@ mod message_object;
 mod resolved_data;
 mod user;
 
+// TODO: API specifies a Snowflake should always be a served as a String but an integer was
+// encountered
+pub type Snowflake = serde_json::Value;
+
 #[cfg(test)]
 mod test {
     use std::fs;

@@ -312,6 +312,12 @@ mod test {
         assert_response(result, expected);
     }
 
+    // TODO: fix T30 response payload
+    // An integer was encountered for 'id' within the Application Command Structure
+    // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-data-structure
+    // This field is specified as a Snowflake and should always be a String, this is likely due to
+    // a malformed response on my part.
+    // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-data-structure
     #[tokio::test]
     async fn bug_2025_03_20() {
         expect_request_from("dto_payloads/2025_03_20_settlement_bug.json");

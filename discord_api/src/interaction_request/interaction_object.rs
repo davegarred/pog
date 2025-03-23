@@ -5,19 +5,20 @@ use crate::interaction_request::guild_member::GuildMember;
 use crate::interaction_request::interaction_data::{InteractionData, InteractionDataPayload};
 use crate::interaction_request::message_object::MessageObject;
 use crate::interaction_request::user::User;
+use crate::interaction_request::Snowflake;
 
 // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct InteractionObject {
-    // pub id: String,
-    pub application_id: String,
+    pub id: Snowflake,
+    pub application_id: Snowflake,
     #[serde(rename = "type")]
     pub interaction_type: u8,
     pub data: Option<InteractionDataPayload>,
-    pub guild_id: Option<String>,
+    pub guild_id: Option<Snowflake>,
     // TODO: https://discord.com/developers/docs/resources/channel#channel-object
     // pub channel: Option<ChannelObject>,
-    pub channel_id: Option<String>,
+    pub channel_id: Option<Snowflake>,
     pub member: Option<GuildMember>,
     pub user: Option<User>,
     pub token: String,
