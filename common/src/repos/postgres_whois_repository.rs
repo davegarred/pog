@@ -55,6 +55,27 @@ impl WhoisRepository for PostgresWhoisRepository {
             .map_err(Error::from)?;
         Ok(())
     }
+
+    async fn set_user(
+        &self,
+        discord_id: u64,
+        human_name: &str,
+        hash_name: &str,
+    ) -> Result<(), Error> {
+        match sqlx::query(ADD_PERSON)
+            .bind(discord_id as i64)
+            .bind(human_name)
+            .bind(hash_name)
+            .execute(&self.pool)
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(err) => match err {
+                sqlx::Error::Database(_) => self.update(discord_id, human_name, hash_name).await,
+                err => Err(err.into()),
+            },
+        }
+    }
 }
 
 fn row_to_person(row: PgRow) -> WhoisPerson {
@@ -75,8 +96,8 @@ mod tests {
     use sqlx::postgres::PgPoolOptions;
 
     #[tokio::test]
-    async fn test_repo() {
-        let time = chrono::Utc::now().timestamp_millis();
+    async fn repo_base_test() {
+        let time = chrono::Utc::now().timestamp_micros();
         let user_id = time as u64;
         let pool = PgPoolOptions::new()
             .max_connections(2)
@@ -95,6 +116,38 @@ mod tests {
             })
         );
         repo.update(user_id, "test2", "test2").await.unwrap();
+        let person = repo.get_by_discord_id(user_id).await.unwrap();
+        assert_eq!(
+            person,
+            Some(WhoisPerson {
+                discord_id: user_id,
+                human_name: "test2".to_string(),
+                hash_name: "test2".to_string(),
+            })
+        );
+    }
+
+    #[tokio::test]
+    async fn set_user() {
+        let time = chrono::Utc::now().timestamp_millis();
+        let user_id = time as u64;
+        let pool = PgPoolOptions::new()
+            .max_connections(2)
+            .connect("postgresql://pog_user:pog_pass@localhost:5432/pog_server")
+            .await
+            .expect("unable to connect to database");
+        let repo = PostgresWhoisRepository::new(pool);
+        repo.set_user(user_id, "test", "test").await.unwrap();
+        let person = repo.get_by_discord_id(user_id).await.unwrap();
+        assert_eq!(
+            person,
+            Some(WhoisPerson {
+                discord_id: user_id,
+                human_name: "test".to_string(),
+                hash_name: "test".to_string(),
+            })
+        );
+        repo.set_user(user_id, "test2", "test2").await.unwrap();
         let person = repo.get_by_discord_id(user_id).await.unwrap();
         assert_eq!(
             person,

@@ -26,6 +26,12 @@ pub trait WhoisRepository: Send + Sync {
         human_name: &str,
         hash_name: &str,
     ) -> impl Future<Output = Result<(), Error>> + Send;
+    fn set_user(
+        &self,
+        discord_id: u64,
+        human_name: &str,
+        hash_name: &str,
+    ) -> impl Future<Output = Result<(), Error>> + Send;
 }
 
 #[derive(Debug, Clone)]
@@ -62,5 +68,14 @@ impl WhoisRepository for InMemWhoisRepository {
             hash_name: hash_name.to_string(),
         }));
         Ok(())
+    }
+
+    async fn set_user(
+        &self,
+        discord_id: u64,
+        human_name: &str,
+        hash_name: &str,
+    ) -> Result<(), Error> {
+        self.update(discord_id, human_name, hash_name).await
     }
 }
