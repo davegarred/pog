@@ -9,5 +9,6 @@ mod t32_settle_bet;
 mod t40_attendance;
 mod t50_help;
 mod t60_admin;
+mod t70_whois;
 
 pub use app::Application;

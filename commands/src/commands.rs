@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use pog_common::{
     ADD_BET_COMMAND, ADMIN_COMMAND, ATTENDANCE_BET_COMMAND, HELP_COMMAND, LIST_BET_COMMAND,
-    SETTLE_BET_COMMAND,
+    SETTLE_BET_COMMAND, WHOIS_COMMAND,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -105,12 +105,12 @@ impl ApplicationCommand {
             name: ADMIN_COMMAND.to_string(),
             description: "POG admin tool".to_string(),
             options: Some(vec![
-                ApplicationCommandOptions {
-                    command_type: 6,
-                    name: "whois".to_string(),
-                    description: "Lookup a user".to_string(),
-                    required: false,
-                },
+                // ApplicationCommandOptions {
+                //     command_type: 6,
+                //     name: "whois".to_string(),
+                //     description: "Lookup a user".to_string(),
+                //     required: false,
+                // },
                 ApplicationCommandOptions {
                     command_type: 7,
                     name: "welcome_channel".to_string(),
@@ -118,6 +118,21 @@ impl ApplicationCommand {
                     required: false,
                 },
             ]),
+        }
+    }
+
+    pub fn whois() -> Self {
+        Self {
+            id: None,
+            command_type: 1,
+            name: WHOIS_COMMAND.to_string(),
+            description: "Lookup a user".to_string(),
+            options: Some(vec![ApplicationCommandOptions {
+                command_type: 6,
+                name: "whois".to_string(),
+                description: "Lookup a user".to_string(),
+                required: true,
+            }]),
         }
     }
 }

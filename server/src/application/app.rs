@@ -82,6 +82,7 @@ where
             pog_common::ATTENDANCE_BET_COMMAND => self.attendance(data, user).await,
             pog_common::HELP_COMMAND => self.help().await,
             pog_common::ADMIN_COMMAND => self.admin(data, user).await,
+            pog_common::WHOIS_COMMAND => self.whois(data, user).await,
             &_ => Err(Error::Invalid(format!(
                 "unknown interaction name: {}",
                 data.name
@@ -544,11 +545,11 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r##"{"type":4,"data":{"embeds":[{"title":"POG Admin help","type":"rich","description":"Admin-only commands","fields":[{"name":"Place a bet","value":"`/whois` gets the human and hash name for a user\n","inline":false},{"name":"Show bets","value":"`/welcome_channel` sets the expected landing page for new users.\n","inline":false}]}],"flags":64}}"##
+            r##"{"type":4,"data":{"embeds":[{"title":"POG Admin help","type":"rich","description":"Admin-only commands","fields":[{"name":"Show bets","value":"`/welcome_channel` sets the expected landing page for new users.\n","inline":false}]}],"flags":64}}"##
         );
     }
 
-    // #[tokio::test]
+    #[tokio::test]
     async fn t60_admin_welcome() {
         let request = expect_request_from("dto_payloads/T60_admin_welcome.json");
         let app = Application::new(
@@ -562,12 +563,15 @@ mod test {
         let result = app.request_handler(request).await.unwrap();
 
         let found = serde_json::to_string(&result).unwrap();
-        assert_eq!(found, r##"{}"##);
+        assert_eq!(
+            found,
+            r##"{"type":4,"data":{"content":"welcome channel updated to: <#1165637665908080730>","flags":64}}"##
+        );
     }
 
     #[tokio::test]
-    async fn t60_admin_whois() {
-        let request = expect_request_from("dto_payloads/T60_admin_whois.json");
+    async fn t70_whois() {
+        let request = expect_request_from("dto_payloads/T70_whois.json");
         let app = Application::new(
             InMemWagerRepository::default(),
             test_attendance_repo(),
@@ -581,7 +585,27 @@ mod test {
         let found = serde_json::to_string(&result).unwrap();
         assert_eq!(
             found,
-            r###"{"type":4,"data":{"content":"_User lookup_\n<@695398918694895710>\nHuman name: Dave\nHash name: FBS","flags":64}}"###
+            r###"{"type":4,"data":{"content":"_User lookup_\n<@431634941626023936>\nHuman name: Dave\nHash name: FBS","flags":64}}"###
+        );
+    }
+
+    #[tokio::test]
+    async fn t70_whois_no_user() {
+        let request = expect_request_from("dto_payloads/T70_whois_no_user.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            test_attendance_repo(),
+            test_admin_repo().await,
+            InMemWhoisRepository::default(),
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
+
+        let found = serde_json::to_string(&result).unwrap();
+        assert_eq!(
+            found,
+            r###"{"type":4,"data":{"content":"No user details available","flags":64}}"###
         );
     }
 

@@ -7,56 +7,57 @@
   "channel": {
     "flags": 0,
     "guild_id": "1150922826463846521",
-    "id": "1323703455595888793",
-    "last_message_id": "1332498429229666316",
-    "name": "tldr-drag",
+    "id": "1165637665908080730",
+    "last_message_id": "1336020847726432286",
+    "name": "welcome",
     "nsfw": false,
     "parent_id": "1150922826463846522",
     "permissions": "2251799813685247",
-    "position": 4,
+    "position": 1,
     "rate_limit_per_user": 0,
     "topic": null,
     "type": 0
   },
-  "channel_id": "1323703455595888793",
+  "channel_id": "1165637665908080730",
   "context": 0,
   "data": {
-    "id": "1326309955745349836",
-    "name": "pog_admin",
+    "id": "1353495659860332604",
+    "name": "whois",
     "options": [
       {
         "name": "whois",
         "type": 6,
-        "value": "695398918694895710"
+        "value": "1326327036289093636"
       }
     ],
     "resolved": {
       "members": {
-        "695398918694895710": {
+        "1326327036289093633": {
           "avatar": null,
           "banner": null,
           "communication_disabled_until": null,
           "flags": 0,
-          "joined_at": "2023-09-11T22:36:24.955000+00:00",
+          "joined_at": "2025-01-07T23:11:19.201000+00:00",
           "nick": null,
           "pending": false,
-          "permissions": "2251799813685247",
+          "permissions": "2248370386488896",
           "premium_since": null,
           "roles": [],
           "unusual_dm_activity_until": null
         }
       },
       "users": {
-        "695398918694895710": {
-          "avatar": "aa3aba4f37dfe047ec130f22f976a55e",
+        "1326327036289093633": {
+          "avatar": null,
           "avatar_decoration_data": null,
           "clan": null,
+          "collectibles": null,
           "discriminator": "0",
-          "global_name": "Harx",
-          "id": "695398918694895710",
+          "global_name": "test-user-2",
+          "id": "1326327036289093633",
           "primary_guild": null,
           "public_flags": 0,
-          "username": "harx6401"
+          "username": "testuser2_35118"
         }
       }
     },
@@ -73,7 +74,7 @@
   },
   "guild_id": "1150922826463846521",
   "guild_locale": "en-US",
-  "id": "1333608909025443852",
+  "id": "1353495888173072475",
   "locale": "en-US",
   "member": {
     "avatar": null,
@@ -93,6 +94,7 @@
       "avatar": "aa3aba4f37dfe047ec130f22f976a55e",
       "avatar_decoration_data": null,
       "clan": null,
+      "collectibles": null,
       "discriminator": "0",
       "global_name": "Harx",
       "id": "695398918694895710",
@@ -101,7 +103,7 @@
       "username": "harx6401"
     }
   },
-  "token": "aW50ZXJhY3Rpb246MTE2Njg2NDI3NTU4MzgxMTU4NTpWb2V6N3BWWWZBdHVKd3hFMVo5cW1Telp6MUtPeXNzMnhJSTZpanc2TVNCaWhjbkszZzBuMExOOENDQXQ1UVVYSGpRRUtsSHJpckVXeXZzUVBDVXpDOHZ1UFc2Q2QwWnhhVk94TjZGQXM2bm9QV25zakU4ZWI1V3NKVkNXQ01icg",
+  "token": "XXXXXXXXXXXXX",
   "type": 2,
   "version": 1
 }

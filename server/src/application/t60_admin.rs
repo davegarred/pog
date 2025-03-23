@@ -26,7 +26,6 @@ where
             Some(option) => option,
         };
         match option.name.as_ref() {
-            "whois" => self.whois(&option.value).await,
             "welcome_channel" => self.welcome_channel(&option.value).await,
             other => Err(Error::Unexpected(format!(
                 "WARNING: Unrecognised option: {}",
@@ -35,49 +34,19 @@ where
         }
         // TODO: deal with more than one option returned
     }
-
-    async fn whois(&self, user: &str) -> Result<InteractionResponse, Error> {
-        let user_id: u64 = match user.parse() {
-            Ok(id) => id,
-            Err(err) => return Err(Error::Unexpected(err.to_string())),
-        };
-        let user_details = match self.whois_repo.get_by_discord_id(user_id).await? {
-            Some(user) => user,
-            None => return no_known_user(),
-        };
-
-        let message = format!(
-            "_User lookup_\n<@{}>\nHuman name: {}\nHash name: {}",
-            user_id, user_details.human_name, user_details.hash_name
-        );
-        Ok(InteractionResponse::channel_message_with_source_ephemeral(
-            &message,
-            vec![],
-            vec![],
-        ))
-    }
-
     async fn welcome_channel(&self, channel: &str) -> Result<InteractionResponse, Error> {
         let mut settings = self.admin_repo.get().await?;
         settings.welcome_channel = channel.to_string();
         self.admin_repo.update(settings).await?;
+        let message = format!("welcome channel updated to: <#{}>", channel);
         Ok(InteractionResponse::channel_message_with_source_ephemeral(
-            "welcome channel updated",
+            message.as_str(),
             vec![],
             vec![],
         ))
     }
 }
 
-fn no_known_user() -> Result<InteractionResponse, Error> {
-    Ok(InteractionResponse::channel_message_with_source_ephemeral(
-        "No user details available",
-        vec![],
-        vec![],
-    ))
-}
-const WHOIS_DESCRIPTION: &str = r###"`/whois` gets the human and hash name for a user
-"###;
 const WELCOME_CHANNEL_DESCRIPTION: &str = r###"`/welcome_channel` sets the expected landing page for new users.
 "###;
 
@@ -86,11 +55,11 @@ fn admin_help() -> Result<InteractionResponse, Error> {
     embed.title = Some("POG Admin help".to_string());
     embed.description = Some("Admin-only commands".to_string());
     embed.fields = vec![
-        EmbedField {
-            name: "Place a bet".to_string(),
-            value: WHOIS_DESCRIPTION.to_string(),
-            inline: false,
-        },
+        // EmbedField {
+        //     name: "Place a bet".to_string(),
+        //     value: WHOIS_DESCRIPTION.to_string(),
+        //     inline: false,
+        // },
         EmbedField {
             name: "Show bets".to_string(),
             value: WELCOME_CHANNEL_DESCRIPTION.to_string(),

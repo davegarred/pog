@@ -7,6 +7,11 @@ use crate::discord_client::DiscordClient;
 use crate::error::Error;
 use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
 
+const WHOIS_DESCRIPTION: &str = r###"`/whois` shows the human and/or hash name of some member on this server.
+
+Don't see your name? Let an admin know and they can fix that for you.
+"###;
+
 const ATTENDANCE_DESCRIPTION: &str = r###"`/attendance` provides attendance data for others in the league.
 - Specify a `manager` to see the attendance record for a manager
 - Specify a `week` to see the attendance on any specific week
@@ -50,6 +55,11 @@ where
         embed.description =
             Some("Use the following commands to fit in within the POG-osphere".to_string());
         embed.fields = vec![
+            EmbedField {
+                name: "Who is this person _____???".to_string(),
+                value: WHOIS_DESCRIPTION.to_string(),
+                inline: false,
+            },
             EmbedField {
                 name: "Place a bet".to_string(),
                 value: PLACE_BET_DESCRIPTION.to_string(),
