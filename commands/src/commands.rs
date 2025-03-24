@@ -105,12 +105,12 @@ impl ApplicationCommand {
             name: ADMIN_COMMAND.to_string(),
             description: "POG admin tool".to_string(),
             options: Some(vec![
-                // ApplicationCommandOptions {
-                //     command_type: 6,
-                //     name: "whois".to_string(),
-                //     description: "Lookup a user".to_string(),
-                //     required: false,
-                // },
+                ApplicationCommandOptions {
+                    command_type: 6,
+                    name: "set_user".to_string(),
+                    description: "Add or update a user".to_string(),
+                    required: false,
+                },
                 ApplicationCommandOptions {
                     command_type: 7,
                     name: "welcome_channel".to_string(),

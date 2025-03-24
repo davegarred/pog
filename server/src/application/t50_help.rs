@@ -8,8 +8,9 @@ use crate::error::Error;
 use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, WhoisRepository};
 
 const WHOIS_DESCRIPTION: &str = r###"`/whois` shows the human and/or hash name of some member on this server.
+After the command prompt add the user (do not use an '@' before the name here).
 
-Don't see your name? Let an admin know and they can fix that for you.
+Don't see your name listed? Let an admin know and they can fix that for you.
 "###;
 
 const ATTENDANCE_DESCRIPTION: &str = r###"`/attendance` provides attendance data for others in the league.

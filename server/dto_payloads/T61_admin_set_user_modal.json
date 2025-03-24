@@ -7,42 +7,47 @@
   "channel": {
     "flags": 0,
     "guild_id": "1150922826463846521",
-    "id": "1323703455595888793",
-    "last_message_id": "1332498429229666316",
-    "name": "tldr-drag",
+    "id": "1165637665908080730",
+    "last_message_id": "1336020847726432286",
+    "name": "welcome",
     "nsfw": false,
     "parent_id": "1150922826463846522",
     "permissions": "2251799813685247",
-    "position": 4,
+    "position": 1,
     "rate_limit_per_user": 0,
     "topic": null,
     "type": 0
   },
-  "channel_id": "1323703455595888793",
+  "channel_id": "1165637665908080730",
   "context": 0,
   "data": {
-    "id": "1326309955745349836",
-    "name": "pog_admin",
-    "options": [],
-    "resolved": {
-      "channels": {
-        "1165637665908080730": {
-          "flags": 0,
-          "guild_id": "1150922826463846521",
-          "id": "1165637665908080730",
-          "last_message_id": "1326337320210927748",
-          "name": "welcome",
-          "nsfw": false,
-          "parent_id": "1150922826463846522",
-          "permissions": "2251799813685247",
-          "position": 1,
-          "rate_limit_per_user": 0,
-          "topic": null,
-          "type": 0
-        }
+    "components": [
+      {
+        "components": [
+          {
+            "custom_id": "human_name",
+            "id": 2,
+            "type": 4,
+            "value": "Neil Armstrong"
+          }
+        ],
+        "id": 1,
+        "type": 1
+      },
+      {
+        "components": [
+          {
+            "custom_id": "hash_name",
+            "id": 4,
+            "type": 4,
+            "value": "Liverstrong"
+          }
+        ],
+        "id": 3,
+        "type": 1
       }
-    },
-    "type": 1
+    ],
+    "custom_id": "setuser|1336020615089356801"
   },
   "entitlement_sku_ids": [],
   "entitlements": [],
@@ -55,7 +60,7 @@
   },
   "guild_id": "1150922826463846521",
   "guild_locale": "en-US",
-  "id": "1333609660552450128",
+  "id": "1353575022496583771",
   "locale": "en-US",
   "member": {
     "avatar": null,
@@ -75,6 +80,7 @@
       "avatar": "aa3aba4f37dfe047ec130f22f976a55e",
       "avatar_decoration_data": null,
       "clan": null,
+      "collectibles": null,
       "discriminator": "0",
       "global_name": "Harx",
       "id": "695398918694895710",
@@ -83,7 +89,7 @@
       "username": "harx6401"
     }
   },
-  "token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  "type": 2,
+  "token": "XXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "type": 5,
   "version": 1
 }

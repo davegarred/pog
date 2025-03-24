@@ -75,10 +75,10 @@ pub fn combine_user_payload(user: &str, id: Option<DiscordId>) -> String {
 pub fn split_combined_user_payload(value: &str) -> (String, Option<DiscordId>) {
     if let Some(delim_pos) = value.find('|') {
         let id_sec = &value[..delim_pos];
-        match id_sec.parse::<u64>() {
-            Ok(id) => return (value[delim_pos + 1..].to_string(), Some(DiscordId(id))),
-            Err(_) => return (value.to_string(), None),
-        }
+        return match id_sec.parse::<u64>() {
+            Ok(id) => (value[delim_pos + 1..].to_string(), Some(DiscordId(id))),
+            Err(_) => (value.to_string(), None),
+        };
     };
     (value.to_string(), None)
 }

@@ -29,7 +29,8 @@ where
             Some(global_name) => global_name.to_string(),
         };
         let resolved_offering_user = DiscordId::from_raw_str(&user.id);
-        let (accepting, resolved_accepting_user) = split_combined_user_payload(&data.custom_id);
+        let (accepting, resolved_accepting_user) =
+            split_combined_user_payload(&data.custom_id[6..]);
 
         let components = data.collect_components()?;
         let (wager, outcome) = match (components.get("wager"), components.get("outcome")) {

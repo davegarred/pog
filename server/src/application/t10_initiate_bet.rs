@@ -42,7 +42,7 @@ where
                     None => &user.username,
                     Some(global_name) => global_name,
                 };
-                combine_user_payload(user_name, Some(id))
+                format!("wager|{}", combine_user_payload(user_name, Some(id)))
             }
             None => accepting,
         };

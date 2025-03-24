@@ -7,38 +7,60 @@
   "channel": {
     "flags": 0,
     "guild_id": "1150922826463846521",
-    "id": "1323703455595888793",
-    "last_message_id": "1332498429229666316",
-    "name": "tldr-drag",
+    "id": "1165637665908080730",
+    "last_message_id": "1336020847726432286",
+    "name": "welcome",
     "nsfw": false,
     "parent_id": "1150922826463846522",
     "permissions": "2251799813685247",
-    "position": 4,
+    "position": 1,
     "rate_limit_per_user": 0,
     "topic": null,
     "type": 0
   },
-  "channel_id": "1323703455595888793",
+  "channel_id": "1165637665908080730",
   "context": 0,
   "data": {
     "id": "1326309955745349836",
     "name": "pog_admin",
-    "options": [],
+    "options": [
+      {
+        "name": "set_user",
+        "type": 6,
+        "value": "1166787343743725609"
+      }
+    ],
     "resolved": {
-      "channels": {
-        "1165637665908080730": {
+      "members": {
+        "1166787343743725609": {
+          "avatar": null,
+          "banner": null,
+          "communication_disabled_until": null,
           "flags": 0,
-          "guild_id": "1150922826463846521",
-          "id": "1165637665908080730",
-          "last_message_id": "1326337320210927748",
-          "name": "welcome",
-          "nsfw": false,
-          "parent_id": "1150922826463846522",
-          "permissions": "2251799813685247",
-          "position": 1,
-          "rate_limit_per_user": 0,
-          "topic": null,
-          "type": 0
+          "joined_at": "2023-10-25T17:18:11.060000+00:00",
+          "nick": null,
+          "pending": false,
+          "permissions": "2248370386497088",
+          "premium_since": null,
+          "roles": [
+            "1166787806622916732"
+          ],
+          "unusual_dm_activity_until": null
+        }
+      },
+      "users": {
+        "1166787343743725609": {
+          "avatar": null,
+          "avatar_decoration_data": null,
+          "bot": true,
+          "clan": null,
+          "collectibles": null,
+          "discriminator": "9132",
+          "global_name": null,
+          "id": "1166787343743725609",
+          "primary_guild": null,
+          "public_flags": 524288,
+          "username": "people-of-greenwood-test"
         }
       }
     },
@@ -55,7 +77,7 @@
   },
   "guild_id": "1150922826463846521",
   "guild_locale": "en-US",
-  "id": "1333609660552450128",
+  "id": "1353510464230916096",
   "locale": "en-US",
   "member": {
     "avatar": null,
@@ -75,6 +97,7 @@
       "avatar": "aa3aba4f37dfe047ec130f22f976a55e",
       "avatar_decoration_data": null,
       "clan": null,
+      "collectibles": null,
       "discriminator": "0",
       "global_name": "Harx",
       "id": "695398918694895710",
@@ -83,7 +106,7 @@
       "username": "harx6401"
     }
   },
-  "token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   "type": 2,
   "version": 1
 }
