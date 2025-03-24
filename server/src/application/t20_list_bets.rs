@@ -1,3 +1,4 @@
+use crate::application::app::counter;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
@@ -19,8 +20,7 @@ where
         &self,
         data: ApplicationCommandInteractionData,
     ) -> Result<InteractionResponse, Error> {
-        // let _timer = Timer::new("t20_list_bets_time");
-        // metric(|mut m| m.count("t20_list_bets"));
+        counter("list_bets");
 
         let option = match data.options.first() {
             Some(option) => option,

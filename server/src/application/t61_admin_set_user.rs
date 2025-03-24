@@ -1,3 +1,4 @@
+use crate::application::app::counter;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
@@ -18,6 +19,8 @@ where
         data: ModalSubmitInteractionData,
         _user: &User,
     ) -> Result<InteractionResponse, Error> {
+        counter("set_user_modal_response");
+
         let id_sec = &data.custom_id[8..];
         let id = match id_sec.parse::<u64>() {
             Ok(id) => id,

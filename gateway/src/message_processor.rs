@@ -51,6 +51,7 @@ impl MessageProcessor {
         match message {
             Ok(value) => match value {
                 Message::Text(text) => {
+                    // println!("request: {text}");
                     let payload: InboundPayload =
                         serde_json::from_str(text.as_str()).expect("deserialize inbound payload");
                     self.internal_tx
@@ -81,6 +82,7 @@ impl MessageProcessor {
                         InboundEvent::MessageCreate(message_create) => {
                             if message_create.content.len() > TLDR_MESSAGE_LENGTH
                                 && message_create.author.bot != Some(true)
+                                && !message_create.content.contains("||")
                             {
                                 let author = match message_create.author.global_name {
                                     Some(global_name) => global_name,

@@ -8,6 +8,10 @@ use pog_common::repos::{AdminRepository, AttendanceRepository, WagerRepository, 
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
 
+pub fn counter(route: &str) {
+    println!("POG_COUNTER:{}", route)
+}
+
 #[derive(Debug, Clone)]
 pub struct Application<
     WR: WagerRepository,

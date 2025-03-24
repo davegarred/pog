@@ -1,3 +1,4 @@
+use crate::application::app::counter;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
@@ -18,6 +19,8 @@ where
         data: ApplicationCommandInteractionData,
         _user: &User,
     ) -> Result<InteractionResponse, Error> {
+        counter("whois");
+
         let option = match data.options.first() {
             None => return self.help().await,
             Some(option) => option,

@@ -1,3 +1,4 @@
+use crate::application::app::counter;
 use crate::application::parse_date::parse_date;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
@@ -21,8 +22,7 @@ where
         data: ModalSubmitInteractionData,
         user: &User,
     ) -> Result<InteractionResponse, Error> {
-        // let _timer = Timer::new("t11_add_wager_time");
-        // metric(|mut m| m.count("t11_add_wager"));
+        counter("add_wager_modal_response");
 
         let offering = match &user.global_name {
             None => user.username.to_string(),

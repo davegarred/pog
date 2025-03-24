@@ -5,6 +5,7 @@ use discord_api::interaction_response::{
     Embed, EmbedField, InteractionCallbackData, InteractionResponse, MessageCallbackData,
 };
 
+use crate::application::app::counter;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
@@ -25,8 +26,7 @@ where
         data: ApplicationCommandInteractionData,
         user: &User,
     ) -> Result<InteractionResponse, Error> {
-        // let _timer = crate::observe::Timer::new("t40_attendance_time");
-        // crate::metric(|mut m| m.count("t40_attendance"));
+        counter("attendance");
 
         let command_user = match DiscordId::from_raw_str(&user.id) {
             Some(user) => user,

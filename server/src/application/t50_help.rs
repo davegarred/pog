@@ -2,6 +2,7 @@ use discord_api::interaction_response::{
     Embed, EmbedField, InteractionCallbackData, InteractionResponse, MessageCallbackData,
 };
 
+use crate::application::app::counter;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
@@ -51,6 +52,8 @@ where
     C: DiscordClient,
 {
     pub async fn help(&self) -> Result<InteractionResponse, Error> {
+        counter("help");
+
         let mut embed = Embed::rich();
         embed.title = Some("POG help".to_string());
         embed.description =

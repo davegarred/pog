@@ -4,6 +4,7 @@ use discord_api::interaction_request::ApplicationCommandInteractionData;
 use discord_api::interaction_response::{Component, InteractionCallbackData, InteractionResponse};
 use discord_api::InteractionError;
 
+use crate::application::app::counter;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
@@ -23,8 +24,7 @@ where
         &self,
         data: ApplicationCommandInteractionData,
     ) -> Result<InteractionResponse, Error> {
-        // let _timer = Timer::new("t10_initiate_bet_time");
-        // metric(|mut m| m.count("t10_initiate_bet"));
+        counter("initiate_bet");
 
         let option = match data.options.first() {
             Some(option) => option,

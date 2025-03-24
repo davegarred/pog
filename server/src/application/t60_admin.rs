@@ -3,6 +3,7 @@ use discord_api::interaction_response::{
     Component, Embed, EmbedField, InteractionCallbackData, InteractionResponse, MessageCallbackData,
 };
 
+use crate::application::app::counter;
 use crate::application::Application;
 use crate::discord_client::DiscordClient;
 use crate::error::Error;
@@ -36,9 +37,13 @@ where
         // TODO: deal with more than one option returned
     }
     async fn set_user_initiate(&self, user_id: &str) -> Result<InteractionResponse, Error> {
+        counter("admin-set_user_initiate");
+
         Ok(open_set_user_modal(user_id))
     }
     async fn welcome_channel(&self, channel: &str) -> Result<InteractionResponse, Error> {
+        counter("admin-welcome_channel");
+
         let mut settings = self.admin_repo.get().await?;
         settings.welcome_channel = channel.to_string();
         self.admin_repo.update(settings).await?;
@@ -61,6 +66,8 @@ Any new users will see a welcome message on this channel when they arrive.
 "###;
 
 fn admin_help() -> Result<InteractionResponse, Error> {
+    counter("admin-help");
+
     let mut embed = Embed::rich();
     embed.title = Some("POG Admin help".to_string());
     embed.description = Some("Admin-only commands".to_string());

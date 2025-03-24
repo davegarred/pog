@@ -1,0 +1,7 @@
+'
+resource.type = "cloud_run_revision"
+resource.labels.service_name : "pog-server-prod-"
+resource.labels.location = "us-central1"
+severity = DEFAULT
+textPayload : "{POG_COUNTER}"
+'
