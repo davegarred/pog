@@ -27,6 +27,7 @@ echo "identified client url as: ${CLIENT_LAMBDA}"
 
 gcloud run deploy "$INSTANCE_NAME" \
   --image="$IMAGE_NAME" \
+  --min-instances=1 \
   --allow-unauthenticated \
   --port=8080 \
   --network=personal-vpc \
