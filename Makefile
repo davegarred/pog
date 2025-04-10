@@ -26,7 +26,6 @@ build_aws:
 
 build_gcp:
 	cargo build --release --features gcp --bin pog
-	cargo build --release --features gcp --bin pog_client
 	cargo build --release --features gcp --bin gateway
 	cargo build --release --bin commands
 
@@ -38,14 +37,11 @@ test_gcp: build_gcp
 
 package_gcp: build_gcp
 	mkdir -p server/build
-	mkdir -p client/build
 	mkdir -p gateway/build
 	cp target/release/pog server/build/
-	cp target/release/pog_client client/build/
 	cp target/release/gateway gateway/build/
 	gcloud storage cp gs://$(POG_GCP_BUCKET)/gateway.crt gateway/build/
 	cd server;docker build . -t pog_server
-	cd client;docker build . -t pog_client
 	cd gateway;docker build . -t pog_gateway
 
 deploy_aws: check-bucket test_aws build_aws
@@ -60,10 +56,8 @@ deploy_aws: check-bucket test_aws build_aws
 
 deploy_gcp: check-gcp test_gcp package_gcp
 	docker tag pog_server $(POG_REPO)/pog_server:latest
-	docker tag pog_client $(POG_REPO)/pog_client:latest
 	docker tag pog_gateway $(POG_REPO)/pog_gateway:latest
 	docker push $(POG_REPO)/pog_server:latest
-	docker push $(POG_REPO)/pog_client:latest
 	docker push $(POG_REPO)/pog_gateway:latest
 
 

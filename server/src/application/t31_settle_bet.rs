@@ -42,12 +42,10 @@ where
             return Err(Error::Invalid(format!("wager {} is not open", wager_id)));
         }
 
-        close_message(&request, &self.client).await?;
-
         let offering_won = format!("{} won", wager.offering);
         let accepting_won = format!("{} won", wager.accepting);
         let content = format!("Closing: {}", wager.simplified_string());
-        Ok(InteractionResponse::channel_message_with_source_ephemeral(
+        let response = InteractionResponse::channel_message_with_source_ephemeral(
             &content,
             vec![Component::action_row(vec![
                 Component::button(&offering_won, 1, format!("offering_{}", wager_id).as_str()),
@@ -60,6 +58,9 @@ where
                 Component::button("Cancel", 2, format!("cancel_{}", wager_id).as_str()),
             ])],
             vec![],
-        ))
+        );
+
+        close_message(&request, &self.client).await?;
+        Ok(response)
     }
 }

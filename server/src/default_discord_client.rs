@@ -1,5 +1,7 @@
 use crate::discord_client::DiscordClient;
-use pog_common::{Authorization, DeleteMessage, DiscordMessage};
+use pog_common::{discord_headers, Authorization, DeleteMessage, DiscordMessage};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::error::Error;
 
@@ -35,7 +37,7 @@ impl AwsDefaultDiscordClient {
 #[cfg(feature = "aws")]
 impl DiscordClient for AwsDefaultDiscordClient {
     async fn delete_message(&self, message_id: &str, request_token: &str) -> Result<(), Error> {
-        let delete = DeleteMessage {
+        let delete = pog_common::DeleteMessage {
             authorization: self.authorization.clone(),
             message_id: message_id.to_string(),
             request_token: request_token.to_string(),
@@ -57,54 +59,67 @@ impl DiscordClient for AwsDefaultDiscordClient {
             Err(err) => Err(Error::ClientFailure(format!("found err: {:?}", err))),
         }
     }
-
-    async fn set_message(
-        &self,
-        _message_id: &str,
-        _request_token: &str,
-        _message: &str,
-    ) -> Result<(), Error> {
-        Ok(())
-    }
 }
 
 #[cfg(feature = "gcp")]
 #[derive(Debug, Clone)]
 pub struct GcpDefaultDiscordClient {
     authorization: Authorization,
-    url: String,
+    messages: Arc<Mutex<Vec<DiscordMessage>>>,
+}
+
+impl GcpDefaultDiscordClient {
+    pub async fn start(self) {
+        loop {
+            let mut messages = self.messages.lock().await;
+            for message in messages.drain(..) {
+                self.send(message).await;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+    }
 }
 
 #[cfg(feature = "gcp")]
 impl GcpDefaultDiscordClient {
-    pub async fn new(application_id: String, application_token: String, url: String) -> Self {
+    pub async fn new(application_id: String, application_token: String) -> Self {
         let authorization = Authorization {
             application_id,
             application_token,
         };
-        Self { authorization, url }
+        Self {
+            authorization,
+            messages: Arc::new(Default::default()),
+        }
+    }
+    async fn queue(&self, message: DiscordMessage) {
+        self.messages.lock().await.push(message);
     }
 
-    pub async fn send(&self, message: DiscordMessage) -> Result<(), Error> {
+    async fn send(&self, message: DiscordMessage) {
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(
             "Content-Type",
             "application/json; charset=UTF-8".parse().unwrap(),
         );
-        let url = format!("{}/call", self.url);
-        let response = reqwest::Client::new()
-            .post(url)
-            .headers(headers)
-            .json(&message)
+        let delete_message = match &message {
+            DiscordMessage::Delete(delete_message) => delete_message,
+            _ => {
+                println!("Processing unexpected message: {:?}", message);
+                return;
+            }
+        };
+        crate::application::app::counter("delete_discord_message");
+        match reqwest::Client::new()
+            .delete(delete_message.url())
+            .headers(discord_headers(&self.authorization))
             .send()
-            .await?;
-        if response.status().is_success() {
-            Ok(())
-        } else {
-            let status_code = response.status();
-            let msg = format!("failure to call pog client with status {}", status_code);
-            println!("client call failed with {}\n{}", status_code, msg);
-            Err(Error::ClientFailure(msg))
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                println!("ERROR calling Discord: {}", err);
+            }
         }
     }
 }
@@ -117,16 +132,7 @@ impl DiscordClient for GcpDefaultDiscordClient {
             message_id: message_id.to_string(),
             request_token: request_token.to_string(),
         });
-        self.send(message).await
-    }
-
-    async fn set_message(
-        &self,
-        _message_id: &str,
-        _request_token: &str,
-        _message: &str,
-    ) -> Result<(), Error> {
-        // TODO: use this or nuke it
+        self.queue(message).await;
         Ok(())
     }
 }

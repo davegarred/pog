@@ -68,7 +68,6 @@ async fn main() -> Result<(), Error> {
         std::env::var("DISCORD_PUBLIC_KEY").expect("finding public key from environment");
     let application_id =
         std::env::var("DISCORD_APPLICATION_ID").expect("finding application id from environment");
-    let client_lambda = std::env::var("CLIENT_LAMBDA").expect("finding client lambda name");
     let db_connection = format!(
         "postgresql://{}:{}@{}:5432/{}",
         db_user, db_pass, db_host, db_name
@@ -83,6 +82,7 @@ async fn main() -> Result<(), Error> {
     {
         let lambda_name =
             std::env::var("AWS_LAMBDA_FUNCTION_NAME").expect("finding lambda function name");
+        let client_lambda = std::env::var("CLIENT_LAMBDA").expect("finding client lambda name");
         let environment = std::env::var("ENVIRONMENT").expect("finding designated environment");
         let mut metrics = crate::observe::Metrics::default();
         metrics.dimension("lambda.name", &lambda_name);
@@ -115,12 +115,13 @@ async fn main() -> Result<(), Error> {
 
     #[cfg(feature = "gcp")]
     {
-        let client = crate::default_discord_client::GcpDefaultDiscordClient::new(
-            application_id,
-            application_token,
-            client_lambda,
-        )
-        .await;
+        let client =
+            default_discord_client::GcpDefaultDiscordClient::new(application_id, application_token)
+                .await;
+        let client_clone = client.clone();
+        tokio::spawn(async move {
+            client_clone.start().await;
+        });
         let application =
             Application::new(wager_repo, attendance_repo, admin_repo, whois_repo, client);
         let state = AppState {

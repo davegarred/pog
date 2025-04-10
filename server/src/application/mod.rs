@@ -1,4 +1,4 @@
-mod app;
+pub(crate) mod app;
 mod parse_date;
 mod t10_initiate_bet;
 mod t11_add_wager;
