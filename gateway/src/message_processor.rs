@@ -2,6 +2,7 @@ use crate::error::Error;
 use crate::heartbeat::WebsocketUpdate;
 use crate::inbound_payloads::{InboundEvent, InboundPayload};
 use crate::payloads::DiscordGatewayResponse;
+use crate::summarizer::ConversationList;
 use crate::tldr;
 use crate::tldr::create_message;
 use crate::TLDR_MESSAGE_LENGTH;
@@ -20,6 +21,7 @@ pub struct MessageProcessor {
     settings: Arc<Mutex<AdminSettings>>,
     sender: UnboundedSender<Message>,
     internal_tx: UnboundedSender<WebsocketUpdate>,
+    conversations: ConversationList,
 }
 
 impl MessageProcessor {
@@ -31,6 +33,7 @@ impl MessageProcessor {
         settings: Arc<Mutex<AdminSettings>>,
         sender: UnboundedSender<Message>,
         internal_tx: UnboundedSender<WebsocketUpdate>,
+        conversations: ConversationList,
     ) -> Self {
         Self {
             resume_gateway,
@@ -41,13 +44,14 @@ impl MessageProcessor {
             settings,
             sender,
             internal_tx,
+            conversations,
         }
     }
 
     pub async fn process(
         &mut self,
         message: Result<Message, tokio_tungstenite::tungstenite::Error>,
-    ) {
+    ) -> Result<(), Error> {
         match message {
             Ok(value) => match value {
                 Message::Text(text) => {
@@ -80,21 +84,31 @@ impl MessageProcessor {
                         InboundEvent::Ack => {}
                         InboundEvent::GuildCreate(_) => {}
                         InboundEvent::MessageCreate(message_create) => {
-                            if message_create.content.len() > TLDR_MESSAGE_LENGTH
-                                && message_create.author.bot != Some(true)
-                                && !message_create.content.contains("||")
+                            let message = message_create.content;
+                            if message_create.author.bot.is_some() || message.trim().is_empty() {
+                                return Ok(());
+                            }
+                            let username = message_create.author.username;
+                            let channel_id = message_create.channel_id;
+                            self.conversations
+                                .add_conversation(
+                                    &message_create.id,
+                                    &message_create.author.id,
+                                    &channel_id,
+                                    &username,
+                                    &message,
+                                )
+                                .await;
+                            if message.len() > TLDR_MESSAGE_LENGTH
+                                && !message.contains("||")
                             {
-                                let author = match message_create.author.global_name {
-                                    Some(global_name) => global_name,
-                                    None => message_create.author.username.clone(),
-                                };
                                 let tldr_message = TlDrMessage {
                                     authorization: self.authorization.clone(),
                                     original_message_id: message_create.id,
-                                    channel_id: message_create.channel_id,
+                                    channel_id,
                                     gemini_key: self.gemini_token.clone(),
-                                    author,
-                                    message: message_create.content,
+                                    author: username,
+                                    message,
                                 };
                                 match tldr::tldr(tldr_message).await {
                                     Ok(()) => {}
@@ -109,11 +123,7 @@ impl MessageProcessor {
                                     },
                                 }
                             } else {
-                                println!(
-                                    "{} - {}",
-                                    message_create.content.len(),
-                                    message_create.author.username
-                                );
+                                println!("{} - {}", message.len(), username);
                             }
                         }
                         InboundEvent::MemberAdd(member_add) => {
@@ -127,7 +137,7 @@ impl MessageProcessor {
                                 .welcome_channel
                                 .clone();
                             if channel_id.is_empty() {
-                                return;
+                                return Ok(());
                             }
                             let name = match user.global_name {
                                 None => user.username,
@@ -166,8 +176,10 @@ impl MessageProcessor {
                 tokio_tungstenite::tungstenite::Error::ConnectionClosed => {
                     println!("connection closed");
                 }
-                e => panic!("{}", e),
+                e => return Err(Error::ClientFailure(e.to_string())),
+                // e => panic!("{}", e),
             },
         }
+        Ok(())
     }
 }

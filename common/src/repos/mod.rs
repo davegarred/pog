@@ -1,8 +1,10 @@
 mod admin_repository;
 pub mod attendance_record;
 pub mod attendance_repository;
+pub mod channel_comment_repository;
 mod postgres_admin_repository;
 pub mod postgres_attendance_repo;
+pub mod postgres_channel_comment_repository;
 pub mod postgres_wager_repository;
 mod postgres_whois_repository;
 pub mod wager_repository;
