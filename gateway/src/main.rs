@@ -1,8 +1,10 @@
 use crate::heartbeat::heartbeat;
 use crate::inbound_payloads::GetGateway;
 use crate::message_processor::MessageProcessor;
+use crate::summarizer::{summarize, ConversationList};
 use chrono::Local;
 use futures_util::{future, pin_mut, StreamExt};
+use pog_common::repos::postgres_channel_comment_repository::PostgresConversationCommentRepository;
 use pog_common::repos::{new_db_pool, AdminRepository, PostgresAdminRepository};
 use pog_common::Authorization;
 use std::sync::{Arc, Mutex};
@@ -15,6 +17,7 @@ mod inbound_payloads;
 mod message_processor;
 mod payloads;
 mod snark;
+mod summarizer;
 mod tldr;
 
 const TLDR_MESSAGE_LENGTH: usize = 700;
@@ -42,6 +45,7 @@ async fn main() {
     );
     let db_pool = new_db_pool(&db_connection).await;
     let admin_repo = PostgresAdminRepository::new(db_pool.clone());
+    let comment_repo = PostgresConversationCommentRepository::new(db_pool.clone());
     let settings = Arc::new(Mutex::new(
         admin_repo
             .get()
@@ -66,43 +70,48 @@ async fn main() {
         Local::now().format("%Y-%m-%dT%H:%M:%S"),
         &settings.lock().unwrap().welcome_channel
     );
-    let resume_gateway = get_gateway().await;
 
-    let (internal_tx, internal_rx) = futures_channel::mpsc::unbounded();
-    let (stdin_tx, stdin_rx) = futures_channel::mpsc::unbounded();
-    let stdin_tx_heartbeat = stdin_tx.clone();
-    tokio::spawn(heartbeat(internal_rx, stdin_tx_heartbeat));
-    let message_processor = Mutex::new(MessageProcessor::new(
-        resume_gateway.clone(),
-        discord_token,
-        authorization,
-        gemini_token,
-        settings,
-        stdin_tx,
-        internal_tx,
-    ));
+    let conversations: ConversationList = Default::default();
+    tokio::spawn(summarize(conversations.clone(), comment_repo));
+    loop {
+        let resume_gateway = get_gateway().await;
 
-    let (ws_stream, _) =
-        tokio_tungstenite::connect_async(format!("{}/?v=10&encoding=json", resume_gateway))
-            .await
-            .expect("connect to discord gateway");
+        let (internal_tx, internal_rx) = futures_channel::mpsc::unbounded();
+        let (stdin_tx, stdin_rx) = futures_channel::mpsc::unbounded();
+        let stdin_tx_heartbeat = stdin_tx.clone();
+        tokio::spawn(heartbeat(internal_rx, stdin_tx_heartbeat));
+        let message_processor = Mutex::new(MessageProcessor::new(
+            resume_gateway.clone(),
+            discord_token.clone(),
+            authorization.clone(),
+            gemini_token.clone(),
+            settings.clone(),
+            stdin_tx,
+            internal_tx,
+            conversations.clone(),
+        ));
+        let (ws_stream, _) =
+            tokio_tungstenite::connect_async(format!("{}/?v=10&encoding=json", resume_gateway))
+                .await
+                .expect("connect to discord gateway");
 
-    let (write, read) = ws_stream.split();
+        let (write, read) = ws_stream.split();
 
-    let stdin_to_ws = stdin_rx.map(Ok).forward(write);
-    let ws_to_stdout = {
-        read.for_each(|message| async {
-            message_processor
-                .lock()
-                .expect("unlock message processor mutex")
-                .process(message)
-                .await;
-        })
-    };
-
-    // TODO: deal with restart/resume
-    pin_mut!(stdin_to_ws, ws_to_stdout);
-    future::select(stdin_to_ws, ws_to_stdout).await;
+        let stdin_to_ws = stdin_rx.map(Ok).forward(write);
+        let ws_to_stdout = {
+            read.for_each(|message| async {
+                message_processor
+                    .lock()
+                    .expect("unlock message processor mutex")
+                    .process(message)
+                    .await
+                    // TODO: deal with restart/resume
+                    .expect("TODO: need to unwind error and continue");
+            })
+        };
+        pin_mut!(stdin_to_ws, ws_to_stdout);
+        future::select(stdin_to_ws, ws_to_stdout).await;
+    }
 }
 
 async fn get_gateway() -> String {

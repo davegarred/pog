@@ -16,6 +16,7 @@ fi
 function get_secret {
   SECRET_KEY=$1
   ENV_VAR=$2
+  echo "Preparing environment var: ${ENV_VAR}"
   if ! SECRET_VALUE=$( gcloud secrets versions access latest --secret="$SECRET_KEY" )
   then
       echo "expected secret was not found: $1"
@@ -35,6 +36,7 @@ DB_NAME_KEY=pog-db_name-$ENVIRONMENT
 GEMINI_TOKEN_KEY=pog-gemini_token-$ENVIRONMENT
 
 echo "ENVIRONMENT=${ENVIRONMENT}" > "${ENVIRONMENT_VAR_STORE}"
+echo "Preparing environment: ${ENVIRONMENT}"
 get_secret "${DISCORD_APP_ID_KEY}" "DISCORD_APPLICATION_ID"
 get_secret "${DISCORD_APP_TOKEN_KEY}" "DISCORD_TOKEN"
 get_secret "${DISCORD_PUBLIC_KEY_KEY}" "DISCORD_PUBLIC_KEY"
