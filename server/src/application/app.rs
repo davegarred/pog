@@ -117,7 +117,8 @@ where
         } else if data.custom_id.starts_with("setuser") {
             self.set_user(data, user).await
         } else {
-            Err("unknown modal response type".into())
+            let err = format!("unknown modal response type: {}", data.custom_id);
+            Err(err.as_str().into())
         }
     }
 }
@@ -330,6 +331,20 @@ mod test {
     #[tokio::test]
     async fn bug_2025_03_20() {
         expect_request_from("dto_payloads/2025_03_20_settlement_bug.json");
+    }
+
+    #[tokio::test]
+    async fn bug_2025_09_29() {
+        let request = expect_request_from("dto_payloads/2025_09_29_bet_submit_bug.json");
+        let app = Application::new(
+            InMemWagerRepository::default(),
+            InMemoryAttendanceRepository::default(),
+            test_admin_repo().await,
+            test_whois_repo().await,
+            TestDiscordClient::default(),
+        );
+
+        let result = app.request_handler(request).await.unwrap();
     }
 
     #[tokio::test]
